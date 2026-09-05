@@ -91,7 +91,7 @@
         '<div class="login__brand">' +
           '<video class="login__video" src="brand-loop.mp4" autoplay loop muted playsinline></video>' +
           '<div class="login__logo"><div class="logo logo--lg">' +
-            '<b>ERA.</b><span>你。让世界更美</span></div></div>' +
+            '<b>ERA CHINESE.</b><span>你。让世界更美</span></div></div>' +
           '<div class="login__foot">' +
             '<div class="login__pitch">' +
               '<h1>' + T('Every lesson, register and mark in one place.') + '</h1>' +
@@ -105,7 +105,7 @@
           '</div>' +
         '</div>' +
         '<div class="login__pick">' +
-          '<div class="login__mark">ERA.</div>' +
+          '<div class="login__mark">ERA CHINESE.</div>' +
           '<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">' +
             '<h2 style="font-size:23px;flex:1">' + T('Sign in') + '</h2>' + langPicker() + '</div>' +
           '<p>' + T('Pick an account to open the school.') + '</p>' +
@@ -138,7 +138,7 @@
       '<div class="shell">' +
         '<nav class="nav">' +
           '<div class="nav__top"><div class="logo">' +
-            '<b>ERA.</b><span>你。让世界更美</span></div></div>' +
+            '<b>ERA CHINESE.</b><span>你。让世界更美</span></div></div>' +
           '<div class="nav__role">' + (role === 'teacher' ? T('Teacher') + (zh ? '' : ' · 教师') : T('Student') + (zh ? '' : ' · 学生')) + '</div>' +
           '<div class="nav__links">' + links.map(function (l) {
             var on = active === l.k ||

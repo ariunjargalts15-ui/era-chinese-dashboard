@@ -152,7 +152,7 @@ era-chinese-lite/
 
 ## The logo
 
-The mark is the wordmark itself: **ERA.** set in Inter Black with the line
+The mark is the wordmark itself: **ERA CHINESE.** set in Inter Black with the line
 **你。让世界更美** in gold, right-aligned so it ends flush with the full stop. It is one
 `.logo` block (`.logo--lg` on the sign-in screen, small in the sidebar), so changing the
 lockup is a change in one CSS rule. The brand violet `#5227E0` from the logo is the app's
