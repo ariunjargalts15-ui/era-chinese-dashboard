@@ -66,12 +66,12 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
 .logo { display:inline-block; text-align:right; }
 .logo b { display:block; font:900 30px/1 var(--sans); letter-spacing:-.035em; margin-right:-.035em; }
 .logo span {
-  display:block; margin-top:4px; font:500 13px/1.4 var(--serif);
+  display:block; margin-top:4px; font:500 15px/1.4 var(--serif);
   color:#E9B949; letter-spacing:.08em; margin-right:-.08em;
 }
 .login__logo .logo b, .nav__top .logo b { color:#FFFFFF; }
 .logo--lg b { font-size:52px; }
-.logo--lg span { font-size:16px; margin-top:8px; letter-spacing:.12em; margin-right:-.12em; }
+.logo--lg span { font-size:19px; margin-top:8px; letter-spacing:.12em; margin-right:-.12em; }
 .login__foot { position:relative; z-index:1; display:flex; flex-direction:column; gap:18px; }
 .login__pitch { max-width:26rem; }
 .login__pitch h1 { font-size:36px; line-height:1.18; text-shadow:0 2px 18px rgba(0,0,0,.45); }
@@ -114,7 +114,7 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
 }
 .nav__top { padding:20px 18px 16px; display:flex; align-items:center; }
 .nav__top .logo b { font-size:26px; }
-.nav__top .logo span { font-size:11px; letter-spacing:.06em; margin-right:-.06em; }
+.nav__top .logo span { font-size:13px; letter-spacing:.06em; margin-right:-.06em; }
 .nav__role {
   margin:0 18px 14px; padding:8px 11px; border-radius:8px; background:rgba(255,255,255,.05);
   font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#A2958A;
