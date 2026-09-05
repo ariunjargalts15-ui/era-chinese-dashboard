@@ -94,6 +94,11 @@ Room state lives in its own `localStorage` key and is broadcast over a
 browser on the same machine**. That is what makes the demo work end to end with no
 server.
 
+The rest of the school — classes, lessons, attendance marks, homework, payments — syncs
+the same way through `store.js`. A teacher marking someone absent or late, or creating a
+new lesson, reaches every open student tab without a manual refresh; `Store.save()`
+broadcasts the change and `Store.reload()` picks it up on the other end.
+
 The **video call is the part that genuinely crosses the internet** — a Jitsi (or Zoom /
 Meet) room works between real people on different machines. The board, chat, quiz and
 whiteboard would need a small server or a WebRTC data channel to do the same; every

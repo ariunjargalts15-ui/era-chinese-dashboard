@@ -6,6 +6,13 @@
 
   var KEY = 'era-chinese-lite/v1';
 
+  /* cross-tab sync: teacher and student sign in as two tabs of the same
+     browser, so a mark, a new lesson or anything else saved in one tab must
+     reach the other without a manual refresh. */
+  var CH = null;
+  var listeners = [];
+  function notify() { listeners.forEach(function (fn) { try { fn(); } catch (e) {} }); }
+
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function isoDay(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function today() { return isoDay(new Date()); }
@@ -297,6 +304,33 @@
 
     save: function () {
       try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* quota / private mode */ }
+      if (CH) { try { CH.postMessage({ t: 'sync', at: Date.now() }); } catch (e) {} }
+    },
+
+    /* Pulls what another tab just wrote — a mark, a new lesson, a payment —
+       so this tab's next render shows it without the user refreshing. */
+    reload: function () {
+      var raw = null;
+      try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+      if (!raw) return;
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && (parsed.version === 2 || parsed.version === 3)) this.data = migrate(parsed);
+      } catch (e) { /* corrupt write mid-flight — keep what we have */ }
+      notify();
+    },
+
+    onChange: function (fn) { listeners.push(fn); },
+
+    initSync: function () {
+      var self = this;
+      try {
+        CH = new BroadcastChannel('era-chinese-store');
+        CH.onmessage = function () { self.reload(); };
+      } catch (e) { CH = null; }
+      global.addEventListener('storage', function (ev) {
+        if (ev.key === KEY) self.reload();
+      });
     },
 
     reset: function () {

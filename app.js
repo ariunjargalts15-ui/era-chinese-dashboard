@@ -349,11 +349,20 @@
     S = global.Store; U = global.UI; A = global.Actions;
     global.I18n.init();
     S.load();
+    S.initSync();
     global.Live.init();
     global.TeacherViews.init();
     global.StudentViews.init();
     global.LiveView.init();
     wireActions();
+
+    /* a mark, a new lesson, a payment saved in another tab (teacher and
+       student typically each run their own) — refresh whatever is on screen.
+       render() already knows to just refresh a mounted live room rather than
+       rebuilding it, so a plain call is enough here too. */
+    S.onChange(function () {
+      if (App.session) render();
+    });
 
     App.session = loadSession();
     if (App.session) App.loginRole = App.session.role;
