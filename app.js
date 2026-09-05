@@ -93,9 +93,7 @@
           '<div class="login__logo"><div class="logo logo--lg">' +
             '<b>ERA CHINESE.</b><span>你。让世界更美</span></div></div>' +
           '<div class="login__foot">' +
-            '<div class="login__pitch">' +
-              '<h1>' + T('Every lesson, register and mark in one place.') + '</h1>' +
-            '</div>' +
+            (zh ? '<div class="login__pitch"><h1>' + T('Every lesson, register and mark in one place.') + '</h1></div>' : '') +
             '<p class="login__slogan">“Сонирхогч бус Мэргэжлийн”</p>' +
             '<div class="login__facts">' +
               '<div><b>' + S.data.classes.length + '</b><span>' + T('Classes') + '</span></div>' +

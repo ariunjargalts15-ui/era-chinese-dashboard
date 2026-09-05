@@ -530,10 +530,10 @@
       var saved = null;
       try { saved = localStorage.getItem(KEY); } catch (e) {}
       if (!saved) {
-        var nav = (navigator.language || 'en').toLowerCase();
-        saved = nav.indexOf('mn') === 0 ? 'mn' : nav.indexOf('zh') === 0 ? 'zh' : 'en';
+        var nav = (navigator.language || 'mn').toLowerCase();
+        saved = nav.indexOf('zh') === 0 ? 'zh' : nav.indexOf('en') === 0 ? 'en' : 'mn';
       }
-      this.set(DICT[saved] ? saved : 'en');
+      this.set(DICT[saved] ? saved : 'mn');
     },
     days: function () { return CAL[lang].days; },
     months: function () { return CAL[lang].months; },
