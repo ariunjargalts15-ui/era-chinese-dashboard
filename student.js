@@ -13,6 +13,27 @@
     return !!(r && r.active);
   }
 
+  /* A graduate keeps the whole record — every register, mark, word and grade —
+     but the course is over: no live room to join and nothing left to hand in.
+     Everything below reads this one flag. */
+  function graduated() { return S.isGraduated(me()); }
+
+  function gradBanner() {
+    var s = me();
+    return '<div class="card" style="margin-bottom:16px;border-color:var(--gold-lt)">' +
+      '<div class="card__b" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">' +
+        '<div class="av" style="background:var(--gold)">' + U.icon('grad') + '</div>' +
+        '<div style="flex:1;min-width:200px">' +
+          '<b>' + T('You have finished your course') + '</b>' +
+          '<div class="tiny muted">' +
+            (s.graduatedAt
+              ? T('Graduated on {date}. Your record stays here to look back on.', { date: U.fmt.dateLong(s.graduatedAt) })
+              : T('Your record stays here to look back on.')) + '</div>' +
+        '</div>' +
+        '<span class="tag tag--gold">' + T('Graduated') + '</span>' +
+      '</div></div>';
+  }
+
   function stat(ic, k, v, s) {
     return '<div class="stat"><div class="stat__k">' + U.icon(ic) + U.esc(k) + '</div>' +
       '<div class="stat__v">' + v + '</div>' + (s ? '<div class="stat__s">' + U.esc(s) + '</div>' : '') + '</div>';
@@ -21,14 +42,15 @@
   /* ══ DASHBOARD ═══════════════════════════════════════ */
   function dashboard() {
     var s = me();
+    var done = graduated();
     var classes = S.classesOfStudent(s.id);
     var lessons = S.lessonsOfStudent(s.id);
-    var live = lessons.filter(function (l) { return isLive(l.id); })[0];
-    var next = live || lessons.filter(function (l) { return l.date >= S.today() && l.status !== 'completed'; })[0];
+    var live = done ? null : lessons.filter(function (l) { return isLive(l.id); })[0];
+    var next = done ? null : (live || lessons.filter(function (l) { return l.date >= S.today() && l.status !== 'completed'; })[0]);
     var rows = S.attendanceOfStudent(s.id);
     var rate = S.attendanceRate(rows);
 
-    var due = lessons.filter(function (l) {
+    var due = done ? [] : lessons.filter(function (l) {
       return l.homework && l.status === 'completed' && !S.submission(l.id, s.id);
     });
     var graded = S.data.submissions.filter(function (x) { return x.studentId === s.id && x.grade != null; });
@@ -38,18 +60,22 @@
     lessons.filter(function (l) { return l.status === 'completed'; }).forEach(function (l) { words += l.words.length; });
 
     return '' +
-      (live ? liveBanner(live) : '') +
+      (done ? gradBanner() : live ? liveBanner(live) : '') +
       '<div class="grid g4">' +
         stat('target', T('Attendance'), (rate == null ? '—' : rate + '<small>%</small>'), T('{n} lessons recorded', { n: rows.length })) +
         stat('book', T('Words studied'), words, T('across completed lessons')) +
-        stat('file', T('Homework due'), due.length, due.length ? T('hand in when ready') : T('all caught up')) +
+        (done
+          ? stat('layers', T('Classes taken'), classes.length, T('over your whole course'))
+          : stat('file', T('Homework due'), due.length, due.length ? T('hand in when ready') : T('all caught up'))) +
         stat('chart', T('Average grade'), (avg == null ? '—' : avg + '<small>/100</small>'), T('{n} graded', { n: graded.length })) +
       '</div>' +
 
       '<div class="grid g-2-1 mt">' +
         '<div class="card"><div class="card__h"><h3>' + (live ? T('Lesson in progress') : T('Next lesson')) + '</h3><span class="sp"></span>' +
           '<a class="btn btn--sm" href="#/s/lessons">' + T('My timetable') + U.icon('chevron') + '</a></div>' +
-          (next ? nextCard(next) : U.empty('calendar', T('No upcoming lessons'))) + '</div>' +
+          (next ? nextCard(next)
+                : U.empty('calendar', done ? T('Your course is finished') : T('No upcoming lessons'),
+                    done ? T('Everything you studied is still here to look back on.') : '')) + '</div>' +
 
         '<div class="card"><div class="card__h"><h3>' + T('To do') + '</h3></div><div class="list">' +
           (due.length ? due.slice(0, 5).map(function (l) {
@@ -59,7 +85,8 @@
               U.icon('chevron') + '</div>';
           }).join('') :
             '<div class="row"><div class="av av--sm" style="background:var(--jade)">' + U.icon('check', 14) + '</div>' +
-            '<div class="row__m"><b>' + T('Nothing outstanding') + '</b><small>' + T('Every assignment handed in') + '</small></div></div>') +
+            '<div class="row__m"><b>' + (done ? T('Course complete') : T('Nothing outstanding')) + '</b>' +
+            '<small>' + (done ? T('Nothing left to hand in') : T('Every assignment handed in')) + '</small></div></div>') +
         '</div></div>' +
       '</div>' +
 
@@ -138,8 +165,9 @@
   /* ══ TIMETABLE ═══════════════════════════════════════ */
   function lessons() {
     var s = me();
+    var done = graduated();
     var all = S.lessonsOfStudent(s.id);
-    var f = App.filters.sScope || 'upcoming';
+    var f = App.filters.sScope || (done ? 'past' : 'upcoming');
     var list = all.filter(function (l) {
       if (f === 'upcoming') return l.date >= S.today();
       if (f === 'past') return l.date < S.today();
@@ -162,7 +190,7 @@
               '<div><b>' + U.esc(l.title) + '</b><div class="tiny muted cn">' + U.esc(l.cn) + '</div></div></div></td>' +
             '<td class="tiny">' + U.esc(c.name) + '<div class="muted">' + U.esc(c.room) + '</div></td>' +
             '<td class="num">' + U.fmt.date(l.date) + '<div class="tiny muted">' + U.esc(l.time) + ' · ' + U.fmt.rel(l.date) + '</div></td>' +
-            '<td>' + (isLive(l.id) ? '<span class="tag tag--red"><span class="dot"></span>' + T('Live') + '</span>'
+            '<td>' + (!done && isLive(l.id) ? '<span class="tag tag--red"><span class="dot"></span>' + T('Live') + '</span>'
                      : l.status === 'completed' ? U.markTag(S.mark(l.id, s.id)) : U.statusTag(l)) + '</td>' +
             '<td>' + (!l.homework ? '<span class="muted tiny">' + T('none') + '</span>'
               : sub ? (sub.grade == null ? '<span class="tag tag--slate">' + T('Submitted') + '</span>'
@@ -178,7 +206,8 @@
     var c = S.klass(l.classId), t = S.user(c.teacherId);
     var sub = S.submission(l.id, s.id);
     var no = S.lessonNo(l);
-    var live = isLive(l.id);
+    var done = graduated();
+    var live = !done && isLive(l.id);
 
     return '' +
       '<button class="btn btn--ghost btn--sm" data-act="go" data-href="#/s/lessons" style="margin-bottom:14px">' +
@@ -232,11 +261,14 @@
                 (sub.grade == null ? '<div style="margin-top:12px"><span class="tag tag--slate">' + T('Waiting for grading') + '</span></div>' :
                   '<div style="margin-top:12px"><span class="tag tag--green num">' + sub.grade + ' / 100</span></div>' +
                   (sub.feedback ? '<p class="tiny muted" style="margin:9px 0 0"><b>' + T('Feedback') + ': </b>' + U.esc(sub.feedback) + '</p>' : '')) +
-                '<button class="btn btn--sm" data-act="submitHw" data-id="' + l.id + '" style="margin-top:12px">' +
-                  U.icon('pencil') + T('Edit my answer') + '</button>'
+                (done ? '' :
+                  '<button class="btn btn--sm" data-act="submitHw" data-id="' + l.id + '" style="margin-top:12px">' +
+                    U.icon('pencil') + T('Edit my answer') + '</button>')
                 :
-                '<button class="btn btn--pri" data-act="submitHw" data-id="' + l.id + '">' +
-                  U.icon('file') + T('Hand in') + '</button>')) +
+                (done
+                  ? '<p class="tiny muted" style="margin:0">' + T('Never handed in — the course has since finished.') + '</p>'
+                  : '<button class="btn btn--pri" data-act="submitHw" data-id="' + l.id + '">' +
+                    U.icon('file') + T('Hand in') + '</button>'))) +
           '</div></div>' +
       '</div>';
   }
@@ -297,8 +329,9 @@
   /* ══ HOMEWORK ════════════════════════════════════════ */
   function homework() {
     var s = me();
+    var done = graduated();
     var lessons = S.lessonsOfStudent(s.id).filter(function (l) { return !!l.homework; });
-    var f = App.filters.sHw || 'todo';
+    var f = App.filters.sHw || (done ? 'submitted' : 'todo');
     var list = lessons.filter(function (l) {
       var sub = S.submission(l.id, s.id);
       if (f === 'todo') return !sub;
@@ -328,8 +361,9 @@
               '<small>' + U.esc(c.name) + ' · ' + U.fmt.date(l.date) + '</small>' +
               '<div class="tiny muted" style="margin-top:3px">' + U.esc(l.homework) + '</div></div>' +
             (sub && sub.grade != null ? '<span class="tag tag--green num">' + sub.grade + '</span>' : '') +
-            '<button class="btn btn--sm' + (sub ? '' : ' btn--pri') + '" data-act="submitHw" data-id="' + l.id + '">' +
-              (sub ? T('Edit') : T('Hand in')) + '</button>' +
+            (done ? '' :
+              '<button class="btn btn--sm' + (sub ? '' : ' btn--pri') + '" data-act="submitHw" data-id="' + l.id + '">' +
+                (sub ? T('Edit') : T('Hand in')) + '</button>') +
             '<button class="btn btn--sm" data-act="sOpenLesson" data-id="' + l.id + '">' + T('Lesson') + '</button>' +
           '</div>';
         }).join('') : U.empty('inbox', T('Nothing here'), T('Try another filter.'))) +
@@ -389,11 +423,15 @@
 
   /* ══ ACTIONS ═════════════════════════════════════════ */
   A.sOpenLesson = function (e) { App.go('#/s/lesson/' + e.getAttribute('data-id')); };
-  A.sGoLive = function (e) { App.go('#/s/live/' + e.getAttribute('data-id')); };
+  A.sGoLive = function (e) {
+    if (graduated()) { U.toast(T('Your course has finished'), 'grad'); return; }
+    App.go('#/s/live/' + e.getAttribute('data-id'));
+  };
   A.setSScope = function (e) { App.filters.sScope = e.getAttribute('data-v'); App.render(); };
   A.setSHw = function (e) { App.filters.sHw = e.getAttribute('data-v'); App.render(); };
 
   A.submitHw = function (e) {
+    if (graduated()) { U.toast(T('Your course has finished'), 'grad'); return; }
     var s = me(), l = S.lesson(e.getAttribute('data-id'));
     var sub = S.submission(l.id, s.id);
     U.Modal.open({

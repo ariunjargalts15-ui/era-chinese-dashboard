@@ -119,12 +119,40 @@ scheduled ──▶ in_progress ──▶ completed
 **Complete lesson** asks for what was covered, the homework and private notes, then
 records any student still unmarked as **absent** and closes the register.
 
+## Graduating a student
+
+Finishing a course is not the same as leaving one, so it is not the same as *Remove from the
+class*. **Graduate** (from *Students*) keeps the student on the roster of every class they sat
+in — that is exactly what keeps their registers, marks, grades and invoices reachable — and
+only flips their status:
+
+|  | Studying | Graduated |
+|---|---|---|
+| On new lesson registers | yes | **no** |
+| On registers they were already marked on | yes | **yes** — history stays whole |
+| Billed when a month is raised | yes | **no** |
+| Unpaid invoices already on the books | owed | **still owed** |
+| Counted in class and dashboard totals | yes | no |
+| Can sign in | yes | **yes, read-only** |
+| Can join a live room or hand in homework | yes | no |
+
+*Students* splits into **Studying · Graduated · All**, so the whole record stays one click
+away, and **Bring back** returns someone to studying if they come back. A graduate signing in
+gets their history — attendance, words, grades, progress — behind a banner saying the course
+is finished, with the live room and the hand-in buttons gone.
+
+Everything reads the status through three helpers in `store.js`: `activeStudents()` for
+lists, `rosterOf(classId)` for a class as it stands today, and `registerOf(lesson)` for one
+lesson's register. A missing status counts as active, so a school saved before any of this
+existed needs no migration.
+
 ## Tuition
 
 Each class carries a **monthly fee** (set when the class is created, edited from the class
 card or from *Payments*). Billing raises **one invoice per enrolled student per calendar
 month**, due on the 5th; it skips anyone already billed for that month, so pressing it twice
-changes nothing. An invoice is *paid* once it carries a payment date, *overdue* once its due
+changes nothing, and it skips graduates entirely — though what they already owe stays on the
+books. An invoice is *paid* once it carries a payment date, *overdue* once its due
 date has passed, *waiting* until then — no status is stored, the dates decide. Changing a fee
 only affects invoices raised afterwards. Amounts are tugrik (180,000₮).
 
@@ -177,8 +205,9 @@ different accounts. **Reset demo** in the top bar puts everything back.
 ## The seeded school
 
 3 classes (HSK 1 Foundations, HSK 3 Intermediate, Business Chinese), 2 teachers,
-8 students, 23 lessons spread three weeks either side of today, with attendance,
-homework, grades and skill assessments already filled in. Ten vocabulary decks of
+8 students — one of whom (Gantulga Baasan) has already graduated, so the *Graduated*
+tab is not empty on a fresh demo — 23 lessons spread three weeks either side of today,
+with attendance, homework, grades and skill assessments already filled in. Ten vocabulary decks of
 eight words each, with pinyin and meanings, carry the lessons. Tuition is billed for
 the last three months (180,000₮ · 220,000₮ · 320,000₮ a month) — the older months are
 nearly all settled, this month is not.

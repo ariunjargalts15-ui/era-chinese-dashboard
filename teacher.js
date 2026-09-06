@@ -16,6 +16,12 @@
     return !!(r && r.active);
   }
 
+  /* A graduate keeps their place on every roster — this is the badge that says
+     so wherever their name still appears. */
+  function gradTag(s) {
+    return S.isGraduated(s) ? ' <span class="tag tag--slate">' + T('Graduated') + '</span>' : '';
+  }
+
   function classOptions(selected, teacherId) {
     return S.classesOfTeacher(teacherId).map(function (c) {
       return '<option value="' + c.id + '"' + (c.id === selected ? ' selected' : '') + '>' +
@@ -38,13 +44,14 @@
     var c = S.klass(l.classId);
     var no = S.lessonNo(l);
     var marked = Object.keys(S.data.attendance[l.id] || {}).length;
+    var onRegister = S.registerOf(l).length;
     return '<tr data-act="openLesson" data-id="' + l.id + '" style="cursor:pointer">' +
       '<td><div style="display:flex;align-items:center;gap:9px">' +
         '<span class="lessonNo">' + no.n + '</span>' +
         '<div><b>' + U.esc(l.title) + '</b><div class="tiny muted cn">' + U.esc(l.cn) + '</div></div></div></td>' +
       (opts && opts.noClass ? '' : '<td>' + U.esc(c ? c.name : '—') + '</td>') +
       '<td class="num">' + U.fmt.date(l.date) + '<div class="tiny muted">' + U.esc(l.time) + ' · ' + U.fmt.rel(l.date) + '</div></td>' +
-      '<td class="num">' + marked + '/' + (c ? c.studentIds.length : 0) + '</td>' +
+      '<td class="num">' + marked + '/' + onRegister + '</td>' +
       '<td>' + (isLive(l.id) ? '<span class="tag tag--red"><span class="dot"></span>' + T('Live') + '</span>' : U.statusTag(l)) + '</td></tr>';
   }
 
@@ -59,7 +66,7 @@
     var classes = S.classesOfTeacher(t.id);
     var lessons = S.lessonsOfTeacher(t.id);
     var studentIds = {};
-    classes.forEach(function (c) { c.studentIds.forEach(function (s) { studentIds[s] = 1; }); });
+    classes.forEach(function (c) { S.rosterOf(c.id).forEach(function (s) { studentIds[s] = 1; }); });
 
     var wk = weekRange();
     var thisWeek = lessons.filter(function (l) { return l.date >= wk.from && l.date <= wk.to; });
@@ -124,7 +131,7 @@
               '<div class="av" style="background:#221C19">' + U.esc(c.level.replace(/[^0-9+]/g, '') || 'B') + '</div>' +
               '<div class="row__m"><b>' + U.esc(c.name) + '</b>' +
                 '<small class="cn">' + U.esc(c.cn) + '</small> <small>· ' + U.esc(U.daysLabel(c.days)) + ' ' + U.esc(c.time) + '</small></div>' +
-              '<div style="text-align:right"><b class="num">' + c.studentIds.length + '</b>' +
+              '<div style="text-align:right"><b class="num">' + S.rosterOf(c.id).length + '</b>' +
                 '<div class="tiny muted">' + (next2 ? U.fmt.rel(next2.date) : T('no lessons')) + '</div></div>' +
               U.icon('chevron') + '</div>';
           }).join('') : U.empty('layers', T('No classes yet'), T('Create your first class.'))) +
@@ -150,7 +157,7 @@
         '<div style="text-align:right">' +
           '<div style="font:700 20px/1.2 var(--sans)">' + U.fmt.date(l.date) + '</div>' +
           '<div class="muted">' + U.esc(l.time) + ' · ' + U.esc(c.room) + '</div>' +
-          '<div class="muted tiny">' + U.esc(c.name) + ' · ' + T('{n} students', { n: c.studentIds.length }) + '</div>' +
+          '<div class="muted tiny">' + U.esc(c.name) + ' · ' + T('{n} students', { n: S.rosterOf(c.id).length }) + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="display:flex;gap:9px;margin-top:16px;flex-wrap:wrap">' +
@@ -171,7 +178,7 @@
   function lowAttendance(classes) {
     var out = [];
     classes.forEach(function (c) {
-      c.studentIds.forEach(function (sid) {
+      S.rosterOf(c.id).forEach(function (sid) {
         var r = S.attendanceRate(S.attendanceOfStudent(sid, c.id));
         if (r != null && r < 70) out.push({ studentId: sid, classId: c.id, rate: r });
       });
@@ -200,10 +207,10 @@
               '<span class="muted">' + T('{done} of {total} lessons delivered', { done: done, total: ls.length }) + '</span><b>' + pct + '%</b></div>' +
             U.bar(pct) +
             '<div style="display:flex;align-items:center;margin-top:14px">' +
-              c.studentIds.slice(0, 6).map(function (sid) {
+              S.rosterOf(c.id).slice(0, 6).map(function (sid) {
                 return '<span style="margin-right:-8px">' + U.avatar(S.user(sid), 'av--sm') + '</span>';
               }).join('') +
-              '<span class="tiny muted" style="margin-left:16px">' + T('{n} students', { n: c.studentIds.length }) + '</span>' +
+              '<span class="tiny muted" style="margin-left:16px">' + T('{n} students', { n: S.rosterOf(c.id).length }) + '</span>' +
             '</div>' +
           '</div></div>';
       }).join('') + '</div>'
@@ -244,10 +251,10 @@
             (c.studentIds.length ? c.studentIds.map(function (sid) {
               var s = S.user(sid);
               var rate = S.attendanceRate(S.attendanceOfStudent(sid, c.id));
-              return '<div class="row">' +
+              return '<div class="row"' + (S.isGraduated(s) ? ' style="opacity:.62"' : '') + '>' +
                 '<span data-act="studentCard" data-id="' + sid + '" data-class="' + c.id + '" style="display:flex;align-items:center;gap:11px;flex:1;cursor:pointer;min-width:0">' +
                   U.avatar(s, 'av--sm') +
-                  '<span class="row__m"><b>' + U.esc(s.name) + '</b><small class="cn">' + U.esc(s.cn) + '</small></span></span>' +
+                  '<span class="row__m"><b>' + U.esc(s.name) + gradTag(s) + '</b><small class="cn">' + U.esc(s.cn) + '</small></span></span>' +
                 '<span class="tag tag--' + (rate == null ? '' : rate >= 85 ? 'green' : rate >= 70 ? 'amber' : 'red') + '">' +
                   (rate == null ? '—' : rate + '%') + '</span>' +
                 '<button class="btn btn--ghost btn--sm" data-act="unenrol" data-id="' + c.id + '" data-student="' + sid +
@@ -292,6 +299,7 @@
     var c = S.klass(l.classId);
     var no = S.lessonNo(l);
     var marks = S.data.attendance[l.id] || {};
+    var register = S.registerOf(l);
     var subs = S.data.submissions.filter(function (s) { return s.lessonId === l.id; });
     var live = isLive(l.id);
 
@@ -327,11 +335,11 @@
 
       '<div class="grid g-2-1 mt">' +
         '<div class="card"><div class="card__h"><h3>' + T('Attendance register') + '</h3><span class="sp"></span>' +
-          '<span class="tag">' + T('{n} of {total} marked', { n: Object.keys(marks).length, total: c.studentIds.length }) + '</span></div>' +
-          '<div class="reg">' + c.studentIds.map(function (sid) {
+          '<span class="tag">' + T('{n} of {total} marked', { n: Object.keys(marks).length, total: register.length }) + '</span></div>' +
+          '<div class="reg">' + register.map(function (sid) {
             var s = S.user(sid), cur = marks[sid] || '';
             return '<div class="reg__r">' + U.avatar(s, 'av--sm') +
-              '<div class="reg__n">' + U.esc(s.name) + ' <span class="cn muted tiny">' + U.esc(s.cn) + '</span></div>' +
+              '<div class="reg__n">' + U.esc(s.name) + ' <span class="cn muted tiny">' + U.esc(s.cn) + '</span>' + gradTag(s) + '</div>' +
               '<div class="marks">' + ['present', 'late', 'absent', 'excused'].map(function (m) {
                 return '<button data-act="mark" data-lesson="' + l.id + '" data-student="' + sid + '" data-mark="' + m + '"' +
                   (cur === m ? ' class="on"' : '') + '>' + U.esc(U.markLabel(m)) + '</button>';
@@ -416,22 +424,42 @@
   }
 
   /* ══ STUDENTS ════════════════════════════════════════ */
+  /* Graduates never leave this list — they move to their own tab, where the
+     whole record stays open: attendance, marks, tuition and all. */
   function students() {
     var t = me();
     var classes = S.classesOfTeacher(t.id);
-    var seen = {}, rows = [];
+    var seen = {}, all = [];
     classes.forEach(function (c) {
       c.studentIds.forEach(function (sid) {
         if (seen[sid]) { seen[sid].classes.push(c); return; }
         seen[sid] = { student: S.user(sid), classes: [c] };
-        rows.push(seen[sid]);
+        all.push(seen[sid]);
       });
     });
 
-    return '<div class="card"><div class="card__h"><h3>' + T('My students') + '</h3>' +
+    var f = App.filters.studentScope || 'active';
+    var rows = all.filter(function (r) {
+      if (f === 'active') return !S.isGraduated(r.student);
+      if (f === 'graduated') return S.isGraduated(r.student);
+      return true;
+    });
+    var nGrad = all.filter(function (r) { return S.isGraduated(r.student); }).length;
+
+    return '<div class="sect">' +
+        '<div class="roleTabs" style="margin:0;max-width:400px;flex:1">' +
+          [['active', T('Studying'), all.length - nGrad],
+           ['graduated', T('Graduated'), nGrad],
+           ['all', T('All'), all.length]].map(function (k) {
+            return '<button data-act="setStudentScope" data-v="' + k[0] + '" class="' + (f === k[0] ? 'on' : '') + '">' +
+              k[1] + ' <span class="num">' + k[2] + '</span></button>';
+          }).join('') +
+        '</div><span class="sp"></span>' +
+        '<button class="btn btn--pri" data-act="newStudent">' + U.icon('plus') + T('New student') + '</button>' +
+      '</div>' +
+      '<div class="card"><div class="card__h"><h3>' + T('My students') + '</h3>' +
         U.gloss('学生') + '<span class="sp"></span>' +
-        '<span class="tag">' + rows.length + '</span>' +
-        '<button class="btn btn--pri btn--sm" data-act="newStudent">' + U.icon('plus') + T('New student') + '</button></div>' +
+        '<span class="tag">' + rows.length + '</span></div>' +
       (rows.length ? '<div class="tw"><table><thead><tr>' +
         '<th>' + T('Student') + '</th><th>' + T('Classes') + '</th><th>' + T('Attendance') + '</th><th>' +
         T('Homework avg') + '</th><th>' + T('Skills') + '</th><th></th>' +
@@ -442,18 +470,30 @@
         var avg = mine.length ? Math.round(mine.reduce(function (a, s) { return a + s.grade; }, 0) / mine.length) : null;
         var pg = S.progressOf(r.classes[0].id, r.student.id);
         var skill = pg ? Math.round((pg.speaking + pg.listening + pg.reading + pg.writing) / 4) : null;
-        return '<tr><td><div style="display:flex;align-items:center;gap:10px">' + U.avatar(r.student) +
-            '<div><b>' + U.esc(r.student.name) + '</b><div class="tiny muted cn">' + U.esc(r.student.cn) + '</div></div></div></td>' +
+        var grad = S.isGraduated(r.student);
+        return '<tr' + (grad ? ' style="opacity:.68"' : '') + '>' +
+          '<td><div style="display:flex;align-items:center;gap:10px">' + U.avatar(r.student) +
+            '<div><b>' + U.esc(r.student.name) + gradTag(r.student) + '</b>' +
+            '<div class="tiny muted cn">' + U.esc(r.student.cn) +
+              (grad && r.student.graduatedAt
+                ? ' <span class="muted">· ' + T('finished {date}', { date: U.fmt.date(r.student.graduatedAt) }) + '</span>'
+                : '') + '</div></div></div></td>' +
           '<td class="tiny">' + r.classes.map(function (c) { return U.esc(c.name); }).join('<br>') + '</td>' +
           '<td style="min-width:130px">' + (rate == null ? '<span class="muted">—</span>' :
             '<div class="tiny num" style="margin-bottom:4px">' + rate + '%</div>' +
             U.bar(rate, rate >= 85 ? 'var(--jade)' : rate >= 70 ? 'var(--amber)' : 'var(--red)')) + '</td>' +
           '<td class="num">' + (avg == null ? '<span class="muted">—</span>' : avg) + '</td>' +
           '<td class="num">' + (skill == null ? '<span class="muted">—</span>' : skill) + '</td>' +
-          '<td style="text-align:right"><button class="btn btn--sm" data-act="studentCard" data-id="' + r.student.id +
+          '<td style="text-align:right;white-space:nowrap">' +
+            '<button class="btn btn--sm" data-act="' + (grad ? 'reactivateStudent' : 'graduateStudent') + '" data-id="' + r.student.id + '">' +
+              U.icon(grad ? 'shuffle' : 'grad', 14) + (grad ? T('Bring back') : T('Graduate')) + '</button> ' +
+            '<button class="btn btn--sm" data-act="studentCard" data-id="' + r.student.id +
             '" data-class="' + r.classes[0].id + '">' + T('Open') + '</button></td></tr>';
       }).join('') +
-      '</tbody></table></div>' : U.empty('users', T('No students yet'), T('Create a class and enrol students in it.'))) +
+      '</tbody></table></div>'
+      : U.empty('users', f === 'graduated' ? T('Nobody has graduated yet') : T('No students yet'),
+          f === 'graduated' ? T('Finished students are kept here with their whole record.')
+                            : T('Create a class and enrol students in it.'))) +
       '</div>';
   }
 
@@ -483,7 +523,7 @@
   function enrolments(teacherId) {
     var out = [];
     S.classesOfTeacher(teacherId).forEach(function (c) {
-      c.studentIds.forEach(function (sid) { out.push({ klass: c, student: S.user(sid) }); });
+      S.rosterOf(c.id).forEach(function (sid) { out.push({ klass: c, student: S.user(sid) }); });
     });
     return out;
   }
@@ -512,7 +552,7 @@
     });
 
     var expected = classes.reduce(function (a, c) {
-      return a + (c.fee == null ? S.DEFAULT_FEE : c.fee) * c.studentIds.length;
+      return a + (c.fee == null ? S.DEFAULT_FEE : c.fee) * S.rosterOf(c.id).length;
     }, 0);
 
     return '<div class="grid g3">' +
@@ -585,7 +625,7 @@
           var owed = S.totals(S.invoicesOfClass(c.id, period === 'all' ? null : period));
           return '<div class="row">' +
             '<span class="row__m"><b>' + U.esc(c.name) + '</b>' +
-              '<small class="cn">' + U.esc(c.cn) + ' · ' + T('{n} students', { n: c.studentIds.length }) + '</small></span>' +
+              '<small class="cn">' + U.esc(c.cn) + ' · ' + T('{n} students', { n: S.rosterOf(c.id).length }) + '</small></span>' +
             '<span class="num" style="text-align:right;min-width:120px">' +
               '<b>' + U.esc(U.fmt.money(fee)) + '</b>' +
               '<div class="tiny muted">' + T('per student, per month') + '</div></span>' +
@@ -627,7 +667,7 @@
                 return '<label class="chip"><input type="checkbox" name="day" value="' + d + '"><span>' + T(d) + '</span></label>';
               }).join('') + '</div></div>' +
             '<div class="field"><span>' + T('Enrol students now') + '</span>' +
-              '<div class="picklist">' + S.students().map(function (s) {
+              '<div class="picklist">' + S.activeStudents().map(function (s) {
                 return '<label class="pick"><input type="checkbox" name="enrol" value="' + s.id + '">' +
                   U.avatar(s, 'av--sm') + '<span><b>' + U.esc(s.name) + '</b>' +
                   '<small class="cn">' + U.esc(s.cn) + '</small></span></label>';
@@ -697,7 +737,7 @@
 
   A.enrolStudents = function (e) {
     var c = S.klass(e.getAttribute('data-id'));
-    var free = S.students().filter(function (s) { return c.studentIds.indexOf(s.id) < 0; });
+    var free = S.activeStudents().filter(function (s) { return c.studentIds.indexOf(s.id) < 0; });
     U.Modal.open({
       title: T('Enrol students'), cn: '添加学生', wide: true,
       body: '<div class="field"><span>' + T('Existing students') + '</span>' +
@@ -767,6 +807,44 @@
     });
   };
 
+  /* ── graduation ──
+     Finishing a course is not the same as leaving one. The roster entry stays,
+     so every register, mark and invoice the student is part of stays reachable;
+     what stops is new billing and their place on new registers. */
+  A.setStudentScope = function (e) { App.filters.studentScope = e.getAttribute('data-v'); App.render(); };
+
+  A.graduateStudent = function (e) {
+    var sid = e.getAttribute('data-id');
+    var s = S.user(sid);
+    var owed = S.invoicesOfStudent(sid).filter(function (p) { return !p.paidAt; });
+    var debt = owed.reduce(function (a, p) { return a + S.balanceOf(p); }, 0);
+    U.Modal.open({
+      title: T('Graduate {name}', { name: s.name }), cn: '毕业',
+      body: '<p style="margin:0 0 12px">' +
+          T('{name} stops appearing on new registers and is no longer billed. Their attendance, marks and tuition history stay on file.',
+            { name: '<b>' + U.esc(s.name) + '</b>' }) + '</p>' +
+        (debt
+          ? '<p class="tiny" style="margin:0;color:var(--red)">' +
+            T('{money} is still outstanding on {n} invoices — that debt stays on the books.',
+              { money: U.fmt.money(debt), n: owed.length }) + '</p>'
+          : ''),
+      okText: T('Graduate'),
+      onOk: function () {
+        S.graduate(sid);
+        U.Modal.close(); App.render();
+        U.toast(T('{name} has graduated', { name: s.name }), 'grad');
+      }
+    });
+  };
+
+  A.reactivateStudent = function (e) {
+    var sid = e.getAttribute('data-id');
+    var s = S.user(sid);
+    S.reactivate(sid);
+    App.render();
+    U.toast(T('{name} is studying again', { name: s.name }), 'check');
+  };
+
   function checked(name) {
     return [].slice.call(document.querySelectorAll('#modal-root [name="' + name + '"]:checked'))
       .map(function (el) { return el.value; });
@@ -784,7 +862,7 @@
     var l = S.lesson(e.getAttribute('data-id'));
     var c = S.klass(l.classId);
     var a = S.data.attendance[l.id] || (S.data.attendance[l.id] = {});
-    c.studentIds.forEach(function (sid) { if (!a[sid]) a[sid] = 'present'; });
+    S.registerOf(l).forEach(function (sid) { if (!a[sid]) a[sid] = 'present'; });
     S.save(); App.render(); U.toast(T('Everyone unmarked is now present'));
   };
 
@@ -806,7 +884,7 @@
         l.homework = U.Modal.val('homework');
         l.notes = U.Modal.val('notes');
         var a = S.data.attendance[l.id] || (S.data.attendance[l.id] = {});
-        c.studentIds.forEach(function (sid) { if (!a[sid]) a[sid] = 'absent'; });
+        S.registerOf(l).forEach(function (sid) { if (!a[sid]) a[sid] = 'absent'; });
         l.status = 'completed';
         S.save();
         if (global.Live && global.Live.room(l.id)) global.Live.end(l.id);
@@ -964,8 +1042,11 @@
       body: '<div class="grid g2" style="gap:20px">' +
           '<div>' +
             '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">' + U.avatar(st, 'av--lg') +
-              '<div><b>' + U.esc(st.name) + '</b><div class="tiny muted">' + U.esc(st.email) + '</div>' +
-              '<div class="tiny muted">' + U.esc(c.name) + '</div></div></div>' +
+              '<div><b>' + U.esc(st.name) + gradTag(st) + '</b><div class="tiny muted">' + U.esc(st.email) + '</div>' +
+              '<div class="tiny muted">' + U.esc(c.name) +
+                (S.isGraduated(st) && st.graduatedAt
+                  ? ' · ' + T('finished {date}', { date: U.fmt.date(st.graduatedAt) }) : '') +
+              '</div></div></div>' +
             '<div style="text-align:center">' + U.ring(rate == null ? 0 : rate, T('attendance')) + '</div>' +
             '<div class="tiny muted" style="text-align:center">' + T('{n} lessons recorded', { n: rows.length }) + '</div>' +
           '</div>' +
@@ -1027,7 +1108,7 @@
     S.classesOfTeacher(t.id).forEach(function (c) {
       var billed = {};
       S.invoicesOfClass(c.id, period).forEach(function (p) { billed[p.studentId] = 1; });
-      c.studentIds.forEach(function (sid) { if (!billed[sid]) pending++; });
+      S.rosterOf(c.id).forEach(function (sid) { if (!billed[sid]) pending++; });
     });
     if (!pending) { U.toast(T('Everyone is already billed for {month}', { month: U.fmt.month(period) }), 'check'); return; }
     U.Modal.open({
@@ -1038,7 +1119,7 @@
         '<div class="list">' + S.classesOfTeacher(t.id).map(function (c) {
           var billed = S.invoicesOfClass(c.id, period).length;
           return '<div class="row"><span class="row__m"><b>' + U.esc(c.name) + '</b>' +
-            '<small>' + T('{n} enrolled', { n: c.studentIds.length }) + ' · ' +
+            '<small>' + T('{n} enrolled', { n: S.rosterOf(c.id).length }) + ' · ' +
             T('{n} already billed', { n: billed }) + '</small></span>' +
             '<span class="tag tag--gold num">' + U.esc(U.fmt.money(c.fee == null ? S.DEFAULT_FEE : c.fee)) + '</span></div>';
         }).join('') + '</div>',

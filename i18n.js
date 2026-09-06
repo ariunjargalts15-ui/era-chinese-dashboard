@@ -159,6 +159,31 @@
     'Edit': 'Засах', 'Homework avg': 'Даалгаврын дундаж', 'Skills': 'Чадвар', 'Open': 'Нээх',
     'My students': 'Миний сурагчид',
 
+    /* graduation */
+    'Graduated': 'Төгссөн', 'Studying': 'Суралцаж буй', 'Graduate': 'Төгсгөх',
+    'Bring back': 'Эргүүлэн авах', 'finished {date}': '{date}-нд төгссөн',
+    'Nobody has graduated yet': 'Одоогоор төгссөн хүн алга',
+    'Finished students are kept here with their whole record.':
+      'Төгссөн сурагчид бүх түүхийнхээ хамт энд хадгалагдана.',
+    'Graduate {name}': '{name}-г төгсгөх',
+    '{name} stops appearing on new registers and is no longer billed. Their attendance, marks and tuition history stay on file.':
+      '{name} шинэ ирцийн бүртгэлд орохоо больж, төлбөр нэхэмжлэхээ зогсооно. Ирц, дүн, төлбөрийн түүх нь хэвээр үлдэнэ.',
+    '{money} is still outstanding on {n} invoices — that debt stays on the books.':
+      '{n} нэхэмжлэх дээр {money} төлөгдөөгүй байна — тэр өр бүртгэлд хэвээр үлдэнэ.',
+    '{name} has graduated': '{name} төгслөө', '{name} is studying again': '{name} дахин суралцаж байна',
+    'You have finished your course': 'Та сургалтаа дүүргэсэн байна',
+    'Graduated on {date}. Your record stays here to look back on.':
+      '{date}-нд төгссөн. Таны бүртгэл эргэн харахад бэлэн энд үлдэнэ.',
+    'Your record stays here to look back on.': 'Таны бүртгэл эргэн харахад бэлэн энд үлдэнэ.',
+    'Classes taken': 'Үзсэн ангиуд', 'over your whole course': 'сургалтын турш',
+    'Your course is finished': 'Таны сургалт дууссан',
+    'Everything you studied is still here to look back on.':
+      'Таны үзсэн бүхэн эргэн харахад бэлэн энд байна.',
+    'Course complete': 'Сургалт дууссан', 'Nothing left to hand in': 'Илгээх зүйл үлдээгүй',
+    'Never handed in — the course has since finished.':
+      'Илгээгээгүй өнгөрсөн — сургалт дуусчихсан.',
+    'Your course has finished': 'Таны сургалт дууссан байна',
+
     /* progress & assessment */
     'Grades over time': 'Дүнгийн явц', 'No grades yet': 'Одоогоор дүн алга',
     'Not assessed yet': 'Үнэлгээ хийгдээгүй', 'SKILL ASSESSMENT': 'ЧАДВАРЫН ҮНЭЛГЭЭ',
@@ -389,6 +414,26 @@
     'Waiting for grading': '等待批改', 'Submitted': '已提交', 'Not handed in': '未提交',
     'Nothing set for this lesson.': '本课没有布置作业。', 'none': '无', 'Edit': '编辑',
     'Homework avg': '作业均分', 'Skills': '技能', 'Open': '打开', 'My students': '我的学生',
+
+    /* graduation */
+    'Graduated': '已毕业', 'Studying': '在读', 'Graduate': '结业', 'Bring back': '恢复在读',
+    'finished {date}': '{date} 结业', 'Nobody has graduated yet': '还没有人毕业',
+    'Finished students are kept here with their whole record.': '结业的学生连同全部记录保留在这里。',
+    'Graduate {name}': '为 {name} 办理结业',
+    '{name} stops appearing on new registers and is no longer billed. Their attendance, marks and tuition history stay on file.':
+      '{name} 将不再出现在新的考勤表上，也不再产生学费账单。考勤、成绩与缴费记录仍然保留。',
+    '{money} is still outstanding on {n} invoices — that debt stays on the books.':
+      '{n} 张账单尚欠 {money} —— 该欠款仍然保留在账上。',
+    '{name} has graduated': '{name} 已毕业', '{name} is studying again': '{name} 重新在读',
+    'You have finished your course': '你已完成课程',
+    'Graduated on {date}. Your record stays here to look back on.': '{date} 结业。你的记录会一直保留在这里。',
+    'Your record stays here to look back on.': '你的记录会一直保留在这里。',
+    'Classes taken': '修读班级', 'over your whole course': '整个课程期间',
+    'Your course is finished': '你的课程已结束',
+    'Everything you studied is still here to look back on.': '你学过的一切都还在这里，可以随时回顾。',
+    'Course complete': '课程已完成', 'Nothing left to hand in': '没有要提交的作业了',
+    'Never handed in — the course has since finished.': '当时未提交 —— 课程此后已结束。',
+    'Your course has finished': '你的课程已经结束',
 
     'Grades over time': '成绩变化', 'No grades yet': '还没有成绩', 'Not assessed yet': '尚未评估',
     'SKILL ASSESSMENT': '技能评估', 'Update assessment': '更新评估', 'Assess {name}': '评估 {name}',

@@ -137,7 +137,8 @@
       { id: 'u_s4', role: 'student', name: 'Temuulen Boldbaatar', cn: '铁木伦', email: 'temuulen@student.mn', color: '#B45A2B' },
       { id: 'u_s5', role: 'student', name: 'Solongo Dorj', cn: '索龙高', email: 'solongo@student.mn', color: '#2F6FA8' },
       { id: 'u_s6', role: 'student', name: 'Khulan Munkh', cn: '呼兰', email: 'khulan@student.mn', color: '#B03060' },
-      { id: 'u_s7', role: 'student', name: 'Gantulga Baasan', cn: '甘图拉', email: 'gantulga@student.mn', color: '#3D7A4A' },
+      { id: 'u_s7', role: 'student', name: 'Gantulga Baasan', cn: '甘图拉', email: 'gantulga@student.mn', color: '#3D7A4A',
+        status: 'graduated', graduatedAt: offset(-9) },
       { id: 'u_s8', role: 'student', name: 'Odval Tsend', cn: '敖德娃', email: 'odval@student.mn', color: '#7A5AA8' }
     ];
 
@@ -346,6 +347,42 @@
     teachers: function () { return this.data.users.filter(function (u) { return u.role === 'teacher'; }); },
     students: function () { return this.data.users.filter(function (u) { return u.role === 'student'; }); },
 
+    /* ── who is still studying ──
+       A student who finishes stays on the roster of every class they sat in —
+       that is what keeps their registers, marks and invoices reachable. Only
+       their status changes, and the rest of the app reads it through these
+       three: activeStudents() for lists, rosterOf() for a class as it stands
+       today, registerOf() for one lesson's register. A missing status means
+       active, so a school saved before graduation existed needs no migration. */
+    isGraduated: function (u) {
+      var x = typeof u === 'string' ? this.user(u) : u;
+      return !!(x && x.status === 'graduated');
+    },
+    activeStudents: function () {
+      var self = this;
+      return this.students().filter(function (u) { return !self.isGraduated(u); });
+    },
+    graduates: function () {
+      var self = this;
+      return this.students().filter(function (u) { return self.isGraduated(u); });
+    },
+    /* the class as it stands today — graduates dropped */
+    rosterOf: function (cid) {
+      var self = this;
+      var c = this.klass(cid);
+      return c ? c.studentIds.filter(function (sid) { return !self.isGraduated(sid); }) : [];
+    },
+    /* Who belongs on one lesson's register: everyone still studying, plus
+       anyone already marked on it. A graduate's past registers stay whole
+       while new lessons stop asking about them. */
+    registerOf: function (lesson) {
+      var self = this;
+      var c = this.klass(lesson.classId);
+      if (!c) return [];
+      var marks = this.data.attendance[lesson.id] || {};
+      return c.studentIds.filter(function (sid) { return !self.isGraduated(sid) || marks[sid]; });
+    },
+
     classesOfTeacher: function (tid) {
       return this.data.classes.filter(function (c) { return c.teacherId === tid; });
     },
@@ -420,9 +457,29 @@
       var colors = ['#C8443C', '#2C7A62', '#A8862A', '#4A5A6A', '#8A4FA0', '#B45A2B', '#2F6FA8', '#B03060', '#3D7A4A', '#7A5AA8'];
       var u = {
         id: uid('u'), role: 'student', name: data.name, cn: data.cn || '',
-        email: data.email || '', color: colors[this.data.users.length % colors.length]
+        email: data.email || '', color: colors[this.data.users.length % colors.length],
+        status: 'active'
       };
       this.data.users.push(u);
+      this.save();
+      return u;
+    },
+    /* Finishing is not leaving: the roster entry, the registers, the marks and
+       any unsettled invoice all stay exactly where they are. Only new billing
+       and new registers pass them by. */
+    graduate: function (sid) {
+      var u = this.user(sid);
+      if (!u || u.role !== 'student') return null;
+      u.status = 'graduated';
+      u.graduatedAt = today();
+      this.save();
+      return u;
+    },
+    reactivate: function (sid) {
+      var u = this.user(sid);
+      if (!u || u.role !== 'student') return null;
+      u.status = 'active';
+      delete u.graduatedAt;
       this.save();
       return u;
     },
@@ -580,7 +637,8 @@
     },
     /* Bill a whole month in one go: every enrolled student who has no invoice
        for that period gets one at the class fee. Already-billed students are
-       left alone, so pressing it twice changes nothing. */
+       left alone, so pressing it twice changes nothing. Graduates are past
+       billing — what they already owe stays on the books regardless. */
     billPeriod: function (classIds, period) {
       var self = this;
       var made = 0;
@@ -589,7 +647,7 @@
         if (!c) return;
         var billed = {};
         self.invoicesOfClass(cid, period).forEach(function (p) { billed[p.studentId] = 1; });
-        c.studentIds.forEach(function (sid) {
+        self.rosterOf(cid).forEach(function (sid) {
           if (billed[sid]) return;
           self.data.payments.push({
             id: uid('pay'), classId: cid, studentId: sid, period: period,

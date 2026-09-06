@@ -667,13 +667,12 @@
 
   /* ── roster / chat ──────────────────────────────────── */
   function rosterHTML(lesson, room, isTeacher) {
-    var c = S.klass(lesson.classId);
     var here = {};
     Live.present(lesson.id).forEach(function (p) { here[p.id] = true; });
     var hands = (room && room.hands) || {};
     var marks = S.data.attendance[lesson.id] || {};
 
-    return '<div class="list">' + c.studentIds.map(function (sid) {
+    return '<div class="list">' + S.registerOf(lesson).map(function (sid) {
       var s = S.user(sid);
       return '<div class="row" style="padding:9px 14px">' +
         '<span class="pres' + (here[sid] ? ' pres--on' : '') + '"></span>' +
@@ -830,7 +829,7 @@
   A.pickStudent = function () {
     var l = lessonNow();
     var here = Live.present(l.id).filter(function (p) { return p.role === 'student'; });
-    var pool = here.length ? here.map(function (p) { return p.id; }) : S.klass(l.classId).studentIds;
+    var pool = here.length ? here.map(function (p) { return p.id; }) : S.rosterOf(l.classId);
     if (!pool.length) { U.toast(T('Nobody to pick'), 'alert'); return; }
     var pick = pool[Math.floor(Math.random() * pool.length)];
     Live.patchBoard(l.id, { picked: pick });

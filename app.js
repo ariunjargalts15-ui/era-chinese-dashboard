@@ -97,7 +97,7 @@
             '<p class="login__slogan">“Сонирхогч бус Мэргэжлийн”</p>' +
             '<div class="login__facts">' +
               '<div><b>' + S.data.classes.length + '</b><span>' + T('Classes') + '</span></div>' +
-              '<div><b>' + S.students().length + '</b><span>' + T('Students') + '</span></div>' +
+              '<div><b>' + S.activeStudents().length + '</b><span>' + T('Students') + '</span></div>' +
               '<div><b>' + S.data.lessons.length + '</b><span>' + T('Lessons') + '</span></div>' +
             '</div>' +
           '</div>' +
@@ -114,7 +114,9 @@
           '<div class="accounts">' + people.map(function (p) {
             return '<button class="acct" data-act="signIn" data-id="' + p.id + '">' + U.avatar(p) +
               '<div style="flex:1"><b>' + U.esc(p.name) + ' <span class="cn muted">' + U.esc(p.cn) + '</span></b>' +
-              '<small>' + U.esc(p.title || p.email) + '</small></div>' + U.icon('chevron') + '</button>';
+              '<small>' + U.esc(p.title || p.email) + '</small></div>' +
+              (S.isGraduated(p) ? '<span class="tag tag--slate">' + T('Graduated') + '</span>' : '') +
+              U.icon('chevron') + '</button>';
           }).join('') + '</div>' +
           '<p class="tiny muted" style="margin-top:22px">' +
             T('Demo school — data is stored in this browser only.') + ' ' +
@@ -188,6 +190,12 @@
 
     var page = App.route[1] || 'dashboard';
     var param = App.route[2] || null;
+
+    /* a graduate has no live room to walk back into, even by a stale link */
+    if (page === 'live' && App.session.role === 'student' && S.isGraduated(App.session.userId)) {
+      location.hash = homeHash();
+      return;
+    }
 
     /* The online classroom holds a live video iframe and a whiteboard canvas —
        rebuilding the page would drop the call, so once it is mounted only its
