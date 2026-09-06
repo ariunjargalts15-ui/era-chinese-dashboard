@@ -13,6 +13,8 @@
     file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/>',
     chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     grad: '<path d="M22 9 12 4 2 9l10 5 10-5Z"/><path d="M6 11.5V17c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-5.5"/>',
+    megaphone: '<path d="M3 11v2a1 1 0 0 0 1 1h2.5L18 20V4L6.5 10H4a1 1 0 0 0-1 1Z"/><path d="M18 9.2a3 3 0 0 1 0 5.6"/><path d="M7 14.5V19a1.5 1.5 0 0 0 3 0v-3.2"/>',
+    pin: '<path d="M9 3h6l-1 6 3.5 3.5H6.5L10 9 9 3Z"/><path d="M12 12.5V21"/>',
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     x: '<path d="M18 6 6 18M6 6l12 12"/>',

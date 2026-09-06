@@ -61,6 +61,7 @@
 
     return '' +
       (done ? gradBanner() : live ? liveBanner(live) : '') +
+      noticeStrip() +
       '<div class="grid g4">' +
         stat('target', T('Attendance'), (rate == null ? '—' : rate + '<small>%</small>'), T('{n} lessons recorded', { n: rows.length })) +
         stat('book', T('Words studied'), words, T('across completed lessons')) +
@@ -123,6 +124,21 @@
           }).join('') +
         '</tbody></table></div></div>' +
       '</div>';
+  }
+
+  /* The pinned notice, if there is one, so school-wide news reaches the people
+     who are already signed in and not only visitors on the sign-in page. */
+  function noticeStrip() {
+    var n = S.published().filter(function (x) { return x.pinned; })[0];
+    if (!n) return '';
+    return '<div class="card" style="margin-bottom:16px">' +
+      '<div class="card__b" style="display:flex;gap:13px;align-items:flex-start;flex-wrap:wrap">' +
+        '<div class="av av--sm" style="background:var(--brand)">' + U.icon('megaphone', 14) + '</div>' +
+        '<div style="flex:1;min-width:220px">' +
+          '<b>' + U.esc(n.title) + '</b>' +
+          '<div class="tiny muted" style="margin-top:3px">' + U.esc(n.body) + '</div></div>' +
+        '<a class="btn btn--sm" href="#/s/news">' + T('All news') + U.icon('chevron') + '</a>' +
+      '</div></div>';
   }
 
   function liveBanner(l) {
@@ -421,6 +437,92 @@
       '</div>';
   }
 
+  /* ══ NEWS ════════════════════════════════════════════ */
+  /* The same noticeboard the sign-in page shows, for people who are already in. */
+  function newsCard(n) {
+    var author = S.user(n.authorId);
+    return '<div class="card"><div class="card__b">' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">' +
+        (n.pinned ? '<span class="tag tag--gold">' + U.icon('pin', 12) + T('Pinned') + '</span>' : '') +
+        '<span class="sp"></span><span class="tiny muted">' + U.fmt.date(n.date) + '</span></div>' +
+      '<h3 style="font-size:17px">' + U.esc(n.title) + '</h3>' +
+      (n.cn ? '<div class="cn muted">' + U.esc(n.cn) + '</div>' : '') +
+      '<p class="muted" style="margin:9px 0 0;white-space:pre-wrap">' + U.esc(n.body) + '</p>' +
+      (author ? '<div class="tiny muted" style="margin-top:10px">' +
+        T('by {name}', { name: U.esc(author.name) }) + '</div>' : '') +
+    '</div></div>';
+  }
+
+  function news() {
+    var list = S.published();
+    return '<div class="sect"><h3>' + T('School news') + '</h3>' + U.gloss('公告') + '</div>' +
+      (list.length ? '<div class="grid g2">' + list.map(newsCard).join('') + '</div>'
+        : '<div class="card">' + U.empty('megaphone', T('Nothing on the noticeboard yet')) + '</div>');
+  }
+
+  /* ══ TUITION ═════════════════════════════════════════ */
+  /* The school bills the student; until now the student had no way to see it.
+     Same invoices the teacher works from, read-only and their own only. */
+  function tuition() {
+    var s = me();
+    var rows = S.invoicesOfStudent(s.id);
+    var tot = S.totals(rows);
+    var owed = rows.filter(function (p) { return !p.paidAt; });
+    var overdue = owed.filter(function (p) { return S.payStatus(p) === 'overdue'; });
+    var next = owed.slice().sort(function (a, b) { return a.dueDate.localeCompare(b.dueDate); })[0];
+
+    return '<div class="grid g3">' +
+        stat('wallet', T('Still to pay'), U.esc(U.fmt.money(tot.outstanding)),
+          owed.length ? T('{n} invoices unpaid', { n: owed.length }) : T('nothing outstanding')) +
+        stat('receipt', T('Paid so far'), U.esc(U.fmt.money(tot.collected)),
+          T('{n} of {total} billed', { n: rows.length ? Math.round(tot.collected / tot.billed * 100) : 0,
+            total: U.fmt.money(tot.billed) })) +
+        stat(overdue.length ? 'alert' : 'clock', T('Next due'),
+          next ? U.esc(U.fmt.date(next.dueDate)) : '—',
+          overdue.length ? T('{n} past the due date', { n: overdue.length })
+                         : next ? U.esc(S.klass(next.classId).name) : T('all settled')) +
+      '</div>' +
+
+      (overdue.length
+        ? '<div class="card mt" style="border-color:var(--red)"><div class="card__b" ' +
+            'style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">' +
+            '<div class="av av--sm" style="background:var(--red)">' + U.icon('alert', 14) + '</div>' +
+            '<div style="flex:1;min-width:200px"><b>' +
+              T('{money} is past its due date', { money: U.fmt.money(
+                overdue.reduce(function (a, p) { return a + S.balanceOf(p); }, 0)) }) + '</b>' +
+              '<div class="tiny muted">' + T('Speak to the school office to settle it.') + '</div></div>' +
+          '</div></div>'
+        : '') +
+
+      '<div class="card mt"><div class="card__h"><h3>' + T('My invoices') + '</h3>' + U.gloss('学费') + '</div>' +
+        (rows.length ? '<div class="tw"><table><thead><tr>' +
+          '<th>' + T('Month') + '</th><th>' + T('Class') + '</th><th>' + T('Due') + '</th>' +
+          '<th class="num">' + T('Amount') + '</th><th>' + T('Status') + '</th></tr></thead><tbody>' +
+          rows.map(function (p) {
+            var c = S.klass(p.classId);
+            var st = S.payStatus(p);
+            var tag = st === 'paid' ? '<span class="tag tag--green">' + T('Paid') + '</span>'
+                    : st === 'overdue' ? '<span class="tag tag--red">' + T('Overdue') + '</span>'
+                    : st === 'partial' ? '<span class="tag tag--gold">' + T('Part paid') + '</span>'
+                    : '<span class="tag tag--amber">' + T('Waiting') + '</span>';
+            return '<tr>' +
+              '<td><b>' + U.esc(U.fmt.month(p.period)) + '</b></td>' +
+              '<td class="tiny">' + U.esc(c ? c.name : '—') + '</td>' +
+              '<td class="num tiny">' + U.fmt.date(p.dueDate) +
+                (p.paidAt ? '<div class="muted">' + T('paid {date}', { date: U.fmt.date(p.paidAt) }) + '</div>' : '') + '</td>' +
+              '<td class="num">' + U.esc(U.fmt.money(p.amount)) +
+                (!p.paidAt && (p.advance || 0) > 0
+                  ? '<div class="tiny muted">' + T('{money} still owed', { money: U.fmt.money(S.balanceOf(p)) }) + '</div>'
+                  : '') + '</td>' +
+              '<td>' + tag + '</td></tr>';
+          }).join('') +
+        '</tbody></table></div>'
+        : U.empty('wallet', T('No invoices yet'), T('Nothing has been billed to you.'))) +
+      '</div>' +
+      '<p class="tiny muted" style="margin-top:12px">' +
+        T('Payments are recorded by the school — this page shows what is on file for you.') + '</p>';
+  }
+
   /* ══ ACTIONS ═════════════════════════════════════════ */
   A.sOpenLesson = function (e) { App.go('#/s/lesson/' + e.getAttribute('data-id')); };
   A.sGoLive = function (e) {
@@ -496,6 +598,6 @@
   global.StudentViews = {
     init: init,
     dashboard: dashboard, lessons: lessons, lessonDetail: lessonDetail,
-    vocab: vocab, homework: homework, progress: progress
+    vocab: vocab, homework: homework, progress: progress, news: news, tuition: tuition
   };
 })(window);

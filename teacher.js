@@ -497,6 +497,67 @@
       '</div>';
   }
 
+  /* ══ NEWS ════════════════════════════════════════════ */
+  /* The school noticeboard. Whatever is published here is what a visitor reads
+     on the sign-in page before they have an account, and what every student
+     sees once they are in — so publishing is the deliberate step, and a draft
+     stays private until the teacher says otherwise. */
+  function news() {
+    var all = S.news();
+    var f = App.filters.newsScope || 'all';
+    var list = all.filter(function (n) {
+      if (f === 'published') return n.published;
+      if (f === 'drafts') return !n.published;
+      return true;
+    });
+    var nPub = all.filter(function (n) { return n.published; }).length;
+
+    return '<div class="sect">' +
+        '<div class="roleTabs" style="margin:0;max-width:400px;flex:1">' +
+          [['all', T('All'), all.length],
+           ['published', T('Published'), nPub],
+           ['drafts', T('Drafts'), all.length - nPub]].map(function (k) {
+            return '<button data-act="setNewsScope" data-v="' + k[0] + '" class="' + (f === k[0] ? 'on' : '') + '">' +
+              k[1] + ' <span class="num">' + k[2] + '</span></button>';
+          }).join('') +
+        '</div><span class="sp"></span>' +
+        '<button class="btn btn--pri" data-act="newNews">' + U.icon('plus') + T('Write a notice') + '</button>' +
+      '</div>' +
+
+      '<p class="muted tiny" style="margin:-6px 0 14px">' +
+        T('Published notices appear on the sign-in page and on every student dashboard.') + '</p>' +
+
+      (list.length ? '<div class="grid g2">' + list.map(function (n) {
+        var author = S.user(n.authorId);
+        return '<div class="card"><div class="card__b">' +
+          '<div style="display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap;align-items:center">' +
+            (n.pinned ? '<span class="tag tag--gold">' + U.icon('pin', 12) + T('Pinned') + '</span>' : '') +
+            (n.published
+              ? '<span class="tag tag--green">' + T('Published') + '</span>'
+              : '<span class="tag tag--slate">' + T('Draft') + '</span>') +
+            '<span class="sp"></span>' +
+            '<span class="tiny muted">' + U.fmt.date(n.date) + '</span></div>' +
+          '<h3 style="font-size:17px">' + U.esc(n.title) + '</h3>' +
+          (n.cn ? '<div class="cn muted">' + U.esc(n.cn) + '</div>' : '') +
+          '<p class="muted" style="margin:9px 0 0;white-space:pre-wrap">' + U.esc(n.body) + '</p>' +
+          '<div class="tiny muted" style="margin-top:10px">' +
+            (author ? T('by {name}', { name: U.esc(author.name) }) : '') + '</div>' +
+          '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">' +
+            '<button class="btn btn--sm" data-act="toggleNewsPublish" data-id="' + n.id + '">' +
+              U.icon(n.published ? 'x' : 'check', 14) + (n.published ? T('Unpublish') : T('Publish')) + '</button>' +
+            '<button class="btn btn--sm" data-act="toggleNewsPin" data-id="' + n.id + '">' +
+              U.icon('pin', 14) + (n.pinned ? T('Unpin') : T('Pin to top')) + '</button>' +
+            '<span class="sp"></span>' +
+            '<button class="btn btn--ghost btn--sm" data-act="editNews" data-id="' + n.id + '">' + U.icon('pencil') + '</button>' +
+            '<button class="btn btn--ghost btn--sm" data-act="deleteNews" data-id="' + n.id + '">' + U.icon('trash') + '</button>' +
+          '</div>' +
+        '</div></div>';
+      }).join('') + '</div>'
+      : '<div class="card">' + U.empty('megaphone',
+          f === 'drafts' ? T('No drafts') : T('Nothing on the noticeboard yet'),
+          T('Write a notice and publish it — visitors see it before they even sign in.')) + '</div>');
+  }
+
   /* ══ PAYMENTS ════════════════════════════════════════ */
   /* Tuition is billed per student per calendar month. An invoice either carries
      a paid date or it is still waiting — overdue once its due date has passed.
@@ -803,6 +864,104 @@
         var cid = U.Modal.val('classId');
         if (cid) S.enroll(cid, u.id);
         U.Modal.close(); App.render(); U.toast(T('Student created'));
+      }
+    });
+  };
+
+  /* ── the noticeboard ── */
+  A.setNewsScope = function (e) { App.filters.newsScope = e.getAttribute('data-v'); App.render(); };
+
+  function newsForm(n) {
+    n = n || {};
+    return '<label class="field"><span>' + T('Headline') + '</span>' +
+        '<input name="title" value="' + U.esc(n.title || '') + '" placeholder="' + T('What is happening') + '"></label>' +
+      '<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">' +
+        '<label class="field"><span>' + T('Chinese headline') + '</span>' +
+          '<input name="cn" value="' + U.esc(n.cn || '') + '" placeholder="中文标题"></label>' +
+        '<label class="field"><span>' + T('Date') + '</span>' +
+          '<input type="date" name="date" value="' + U.esc(n.date || S.today()) + '"></label></div>' +
+      '<label class="field"><span>' + T('Notice') + '</span>' +
+        '<textarea name="body" style="min-height:130px" placeholder="' +
+          T('The whole notice, as your students should read it.') + '">' + U.esc(n.body || '') + '</textarea></label>' +
+      '<label class="chip" style="display:inline-flex;margin-right:8px">' +
+        '<input type="checkbox" name="published"' + (n.published ? ' checked' : '') + '>' +
+        '<span>' + T('Publish it now') + '</span></label>' +
+      '<label class="chip" style="display:inline-flex">' +
+        '<input type="checkbox" name="pinned"' + (n.pinned ? ' checked' : '') + '>' +
+        '<span>' + T('Pin to the top') + '</span></label>';
+  }
+  function isChecked(name) {
+    var el = document.querySelector('#modal-root [name="' + name + '"]');
+    return !!(el && el.checked);
+  }
+
+  A.newNews = function () {
+    U.Modal.open({
+      title: T('Write a notice'), cn: '发布公告', wide: true,
+      body: newsForm({ published: true }),
+      okText: T('Save notice'),
+      onOk: function () {
+        var title = U.Modal.val('title');
+        if (!title) { U.toast(T('The notice needs a headline'), 'alert'); return; }
+        S.addNews({
+          title: title, cn: U.Modal.val('cn'), body: U.Modal.val('body'),
+          date: U.Modal.val('date') || S.today(),
+          published: isChecked('published'), pinned: isChecked('pinned'),
+          authorId: App.session.userId
+        });
+        U.Modal.close(); App.render();
+        U.toast(isChecked('published') ? T('Notice published') : T('Notice saved as a draft'), 'megaphone');
+      }
+    });
+  };
+
+  A.editNews = function (e) {
+    var n = S.newsItem(e.getAttribute('data-id'));
+    if (!n) return;
+    U.Modal.open({
+      title: T('Edit notice'), cn: '编辑公告', wide: true,
+      body: newsForm(n),
+      okText: T('Save notice'),
+      onOk: function () {
+        var title = U.Modal.val('title');
+        if (!title) { U.toast(T('The notice needs a headline'), 'alert'); return; }
+        S.updateNews(n.id, {
+          title: title, cn: U.Modal.val('cn'), body: U.Modal.val('body'),
+          date: U.Modal.val('date') || n.date,
+          published: isChecked('published'), pinned: isChecked('pinned')
+        });
+        U.Modal.close(); App.render(); U.toast(T('Notice saved'));
+      }
+    });
+  };
+
+  A.toggleNewsPublish = function (e) {
+    var n = S.newsItem(e.getAttribute('data-id'));
+    if (!n) return;
+    var going = !n.published;
+    S.updateNews(n.id, { published: going });
+    App.render();
+    U.toast(going ? T('Notice published') : T('Notice taken down'), 'megaphone');
+  };
+
+  A.toggleNewsPin = function (e) {
+    var n = S.newsItem(e.getAttribute('data-id'));
+    if (!n) return;
+    S.updateNews(n.id, { pinned: !n.pinned });
+    App.render();
+  };
+
+  A.deleteNews = function (e) {
+    var n = S.newsItem(e.getAttribute('data-id'));
+    if (!n) return;
+    U.Modal.open({
+      title: T('Delete notice'),
+      body: '<p style="margin:0">' + T('Delete {title}? Anyone reading it now will stop seeing it.',
+        { title: '<b>' + U.esc(n.title) + '</b>' }) + '</p>',
+      okText: T('Delete'),
+      onOk: function () {
+        S.deleteNews(n.id);
+        U.Modal.close(); App.render(); U.toast(T('Notice deleted'), 'trash');
       }
     });
   };
@@ -1325,6 +1484,6 @@
     init: init,
     dashboard: dashboard, classes: classes, classDetail: classDetail,
     lessons: lessons, lessonDetail: lessonDetail, homework: homework, students: students,
-    payments: payments
+    payments: payments, news: news
   };
 })(window);

@@ -10,7 +10,8 @@
     route: [],            /* hash segments after # */
     filters: {},          /* per-page filter state, not persisted */
     flash: null,          /* flashcard practice state */
-    loginRole: 'teacher'
+    loginRole: 'teacher',
+    loginTab: 'signin'      /* the sign-in panel, or the public noticeboard */
   };
   global.App = App;
 
@@ -22,14 +23,17 @@
       { k: 'lessons', icon: 'book', label: 'Lessons', cn: '课程' },
       { k: 'homework', icon: 'inbox', label: 'Homework', cn: '作业' },
       { k: 'students', icon: 'users', label: 'Students', cn: '学生' },
-      { k: 'payments', icon: 'wallet', label: 'Payments', cn: '学费' }
+      { k: 'payments', icon: 'wallet', label: 'Payments', cn: '学费' },
+      { k: 'news', icon: 'megaphone', label: 'News', cn: '公告' }
     ],
     student: [
       { k: 'dashboard', icon: 'home', label: 'Dashboard', cn: '概览' },
       { k: 'lessons', icon: 'calendar', label: 'My timetable', cn: '课表' },
       { k: 'vocab', icon: 'sparkles', label: 'Vocabulary', cn: '生词' },
       { k: 'homework', icon: 'file', label: 'Homework', cn: '作业' },
-      { k: 'progress', icon: 'chart', label: 'My progress', cn: '进度' }
+      { k: 'progress', icon: 'chart', label: 'My progress', cn: '进度' },
+      { k: 'tuition', icon: 'wallet', label: 'My tuition', cn: '学费' },
+      { k: 'news', icon: 'megaphone', label: 'News', cn: '公告' }
     ]
   };
   var PREFIX = { teacher: 't', student: 's' };
@@ -86,6 +90,8 @@
     var role = App.loginRole;
     var people = role === 'teacher' ? S.teachers() : S.students();
     var zh = global.I18n.get() === 'zh';
+    var notices = S.published();
+    var tab = App.loginTab === 'news' ? 'news' : 'signin';
     return '' +
       '<div class="login">' +
         '<div class="login__brand">' +
@@ -104,8 +110,25 @@
         '</div>' +
         '<div class="login__pick">' +
           '<div class="login__mark">ERA CHINESE.</div>' +
-          '<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">' +
-            '<h2 style="font-size:23px;flex:1">' + T('Sign in') + '</h2>' + langPicker() + '</div>' +
+          '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">' +
+            '<h2 style="font-size:23px;flex:1">' + (tab === 'news' ? T('School news') : T('Sign in')) + '</h2>' +
+            langPicker() + '</div>' +
+          /* a visitor with no account can still read what the school is up to */
+          '<div class="roleTabs" style="margin-bottom:18px">' +
+            [['signin', T('Sign in')], ['news', T('News') + (notices.length ? ' · ' + notices.length : '')]]
+              .map(function (k) {
+                return '<button data-act="loginTab" data-v="' + k[0] + '" class="' + (tab === k[0] ? 'on' : '') + '">' +
+                  k[1] + '</button>';
+              }).join('') +
+          '</div>' +
+          (tab === 'news' ? newsPanel(notices) : signInPanel(role, people, zh)) +
+        '</div>' +
+      '</div>';
+  }
+
+  /* the sign-in half of that panel */
+  function signInPanel(role, people, zh) {
+    return '' +
           '<p>' + T('Pick an account to open the school.') + '</p>' +
           '<div class="roleTabs">' +
             '<button data-act="loginRole" data-v="teacher" class="' + (role === 'teacher' ? 'on' : '') + '">' + T('Teacher') + (zh ? '' : ' 教师') + '</button>' +
@@ -120,9 +143,28 @@
           }).join('') + '</div>' +
           '<p class="tiny muted" style="margin-top:22px">' +
             T('Demo school — data is stored in this browser only.') + ' ' +
-            '<a href="#" data-act="resetDemo" style="color:var(--brand);font-weight:600">' + T('Reset the demo data') + '</a>.</p>' +
-        '</div>' +
-      '</div>';
+            '<a href="#" data-act="resetDemo" style="color:var(--brand);font-weight:600">' + T('Reset the demo data') + '</a>.</p>';
+  }
+
+  /* the noticeboard as a visitor reads it — no account needed */
+  function newsPanel(notices) {
+    if (!notices.length) {
+      return U.empty('megaphone', T('Nothing on the noticeboard yet'),
+        T('School news will show up here.'));
+    }
+    return '<div class="notices">' + notices.map(function (n) {
+      var author = S.user(n.authorId);
+      return '<article class="notice' + (n.pinned ? ' notice--pin' : '') + '">' +
+        '<div class="notice__h">' +
+          (n.pinned ? '<span class="tag tag--gold">' + U.icon('pin', 12) + T('Pinned') + '</span>' : '') +
+          '<span class="sp"></span>' +
+          '<span class="tiny muted">' + U.fmt.date(n.date) + '</span></div>' +
+        '<b>' + U.esc(n.title) + '</b>' +
+        (n.cn ? '<div class="cn muted tiny">' + U.esc(n.cn) + '</div>' : '') +
+        '<p>' + U.esc(n.body) + '</p>' +
+        (author ? '<div class="tiny muted">' + T('by {name}', { name: U.esc(author.name) }) + '</div>' : '') +
+      '</article>';
+    }).join('') + '</div>';
   }
 
   /* ── shell ────────────────────────────────────────────── */
@@ -229,6 +271,7 @@
              : page === 'homework' ? V.homework()
              : page === 'students' ? V.students()
              : page === 'payments' ? V.payments()
+             : page === 'news' ? V.news()
              : notFound();
       } else {
         body = page === 'dashboard' ? V.dashboard()
@@ -237,6 +280,8 @@
              : page === 'vocab' ? V.vocab()
              : page === 'homework' ? V.homework()
              : page === 'progress' ? V.progress()
+             : page === 'tuition' ? V.tuition()
+             : page === 'news' ? V.news()
              : notFound();
       }
     } catch (err) {
@@ -264,6 +309,7 @@
   function wireActions() {
     A.go = function (e) { App.go(e.getAttribute('data-href')); };
     A.loginRole = function (e) { App.loginRole = e.getAttribute('data-v'); render(); };
+    A.loginTab = function (e) { App.loginTab = e.getAttribute('data-v'); render(); };
 
     A.setLang = function (e) {
       global.I18n.set(e.value);

@@ -159,6 +159,41 @@
     'Edit': 'Засах', 'Homework avg': 'Даалгаврын дундаж', 'Skills': 'Чадвар', 'Open': 'Нээх',
     'My students': 'Миний сурагчид',
 
+    /* news & noticeboard */
+    'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
+    'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
+    'Delete notice': 'Мэдээ устгах', 'Notice': 'Мэдээний агуулга', 'Headline': 'Гарчиг',
+    'Chinese headline': 'Хятад гарчиг', 'What is happening': 'Юу болж байна',
+    'The whole notice, as your students should read it.':
+      'Сурагчид уншихаар бүтэн мэдээгээ бичнэ үү.',
+    'Publish it now': 'Одоо нийтлэх', 'Pin to the top': 'Дээр нь бэхлэх',
+    'Published': 'Нийтэлсэн', 'Drafts': 'Ноорог', 'Draft': 'Ноорог', 'Pinned': 'Бэхлэсэн',
+    'Publish': 'Нийтлэх', 'Unpublish': 'Нийтлэхээ болих', 'Pin to top': 'Дээр бэхлэх', 'Unpin': 'Бэхлэлт авах',
+    'Notice published': 'Мэдээ нийтлэгдлээ', 'Notice taken down': 'Мэдээг буулгалаа',
+    'Notice saved': 'Мэдээ хадгалагдлаа', 'Notice saved as a draft': 'Мэдээ ноорогт хадгалагдлаа',
+    'Notice deleted': 'Мэдээ устлаа', 'The notice needs a headline': 'Мэдээнд гарчиг хэрэгтэй',
+    'Delete {title}? Anyone reading it now will stop seeing it.':
+      '{title}-г устгах уу? Одоо уншиж байгаа хүмүүст харагдахаа болино.',
+    'Nothing on the noticeboard yet': 'Одоогоор мэдээ алга', 'No drafts': 'Ноорог алга',
+    'Write a notice and publish it — visitors see it before they even sign in.':
+      'Мэдээ бичээд нийтэл — зочид нэвтрэхээсээ ч өмнө уншина.',
+    'Published notices appear on the sign-in page and on every student dashboard.':
+      'Нийтэлсэн мэдээ нэвтрэх хуудас болон сурагч бүрийн самбар дээр гарна.',
+    'School news will show up here.': 'Сургуулийн мэдээ энд гарч ирнэ.',
+    'by {name}': '{name}',
+
+    /* a student's own tuition */
+    'My tuition': 'Миний төлбөр', 'My invoices': 'Миний нэхэмжлэх',
+    'Still to pay': 'Төлөх үлдэгдэл', 'Paid so far': 'Төлсөн дүн', 'Next due': 'Дараагийн хугацаа',
+    'nothing outstanding': 'үлдэгдэлгүй', 'all settled': 'бүгд төлөгдсөн',
+    '{n} of {total} billed': 'нэхэмжилсэн {total}-н {n}%',
+    '{money} is past its due date': '{money} хугацаа хэтэрсэн байна',
+    'Speak to the school office to settle it.': 'Төлбөрөө барагдуулахаар сургуулийн ажилтантай холбогдоно уу.',
+    'paid {date}': '{date}-нд төлсөн', '{money} still owed': '{money} үлдэгдэлтэй',
+    'No invoices yet': 'Одоогоор нэхэмжлэх алга', 'Nothing has been billed to you.': 'Танд нэхэмжлэх гараагүй байна.',
+    'Payments are recorded by the school — this page shows what is on file for you.':
+      'Төлбөрийг сургууль бүртгэдэг — энэ хуудас таны бүртгэлд юу байгааг харуулна.',
+
     /* graduation */
     'Graduated': 'Төгссөн', 'Studying': 'Суралцаж буй', 'Graduate': 'Төгсгөх',
     'Bring back': 'Эргүүлэн авах', 'finished {date}': '{date}-нд төгссөн',
@@ -414,6 +449,39 @@
     'Waiting for grading': '等待批改', 'Submitted': '已提交', 'Not handed in': '未提交',
     'Nothing set for this lesson.': '本课没有布置作业。', 'none': '无', 'Edit': '编辑',
     'Homework avg': '作业均分', 'Skills': '技能', 'Open': '打开', 'My students': '我的学生',
+
+    /* news & noticeboard */
+    'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
+    'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',
+    'Delete notice': '删除公告', 'Notice': '公告内容', 'Headline': '标题',
+    'Chinese headline': '中文标题', 'What is happening': '发生了什么',
+    'The whole notice, as your students should read it.': '完整的公告内容，学生看到的就是这些。',
+    'Publish it now': '立即发布', 'Pin to the top': '置顶',
+    'Published': '已发布', 'Drafts': '草稿', 'Draft': '草稿', 'Pinned': '置顶',
+    'Publish': '发布', 'Unpublish': '取消发布', 'Pin to top': '置顶', 'Unpin': '取消置顶',
+    'Notice published': '公告已发布', 'Notice taken down': '公告已撤下',
+    'Notice saved': '公告已保存', 'Notice saved as a draft': '公告已存为草稿',
+    'Notice deleted': '公告已删除', 'The notice needs a headline': '公告需要标题',
+    'Delete {title}? Anyone reading it now will stop seeing it.': '删除{title}？正在阅读的人将不再看到它。',
+    'Nothing on the noticeboard yet': '公告栏还是空的', 'No drafts': '没有草稿',
+    'Write a notice and publish it — visitors see it before they even sign in.':
+      '写一条公告并发布 —— 访客还没登录就能看到。',
+    'Published notices appear on the sign-in page and on every student dashboard.':
+      '已发布的公告会出现在登录页和每位学生的主页上。',
+    'School news will show up here.': '学校公告会显示在这里。',
+    'by {name}': '{name}',
+
+    /* a student's own tuition */
+    'My tuition': '我的学费', 'My invoices': '我的账单',
+    'Still to pay': '待缴', 'Paid so far': '已缴', 'Next due': '下次到期',
+    'nothing outstanding': '没有欠费', 'all settled': '全部结清',
+    '{n} of {total} billed': '已缴 {n}%，共开具 {total}',
+    '{money} is past its due date': '{money} 已逾期',
+    'Speak to the school office to settle it.': '请与学校前台联系缴清。',
+    'paid {date}': '{date} 已缴', '{money} still owed': '尚欠 {money}',
+    'No invoices yet': '还没有账单', 'Nothing has been billed to you.': '目前没有向你开具账单。',
+    'Payments are recorded by the school — this page shows what is on file for you.':
+      '缴费由学校登记 —— 此页显示的是你名下的记录。',
 
     /* graduation */
     'Graduated': '已毕业', 'Studying': '在读', 'Graduate': '结业', 'Bring back': '恢复在读',

@@ -43,16 +43,19 @@ data, so they never change.
 | Homework | Every submission across all classes; grade 0–100 with written feedback |
 | Students | Roster with attendance, homework average and skill score; create a student; open a card for the skill radar and to record a new assessment |
 | Payments 学费 | Tuition control: collected / outstanding / overdue for a month or across all of them, **Bill {month}** to raise the missing invoices in one press, record a payment with its date, amount and method (cash, bank, card, mobile) — part payments stay on the invoice as an **advance** (урьдчилгаа) with the balance still showing — reverse a payment, add a one-off invoice, and set the monthly fee per class |
+| News 公告 | The school noticeboard — write a notice, publish it or keep it a draft, pin it to the top, edit or delete it. Published notices are what visitors read on the sign-in page and what students see on their dashboard |
 
 ### Student 学生
 | Page | What it does |
 | --- | --- |
-| Dashboard | Attendance, words studied, homework due, average grade, next lesson — and a red banner with **Join the lesson** the moment the teacher opens the room |
+| Dashboard | Attendance, words studied, homework due, average grade, next lesson — a red banner with **Join the lesson** the moment the teacher opens the room, and the pinned school notice |
 | My timetable | Every lesson with its number, attendance mark and homework state |
 | Lesson detail | Topic, full vocabulary with audio, hand in homework, read the grade and feedback |
 | Vocabulary | Flashcard practice on any lesson's word set — flip, shuffle, mark known, ← → and space |
 | Homework | To do / submitted / all |
 | My progress | Attendance ring, grades over time, skill radar per class |
+| My tuition 学费 | What they still owe, what they have paid, the next due date, and every invoice with its status — read-only, their own only |
+| News 公告 | The school noticeboard, same notices the sign-in page shows |
 
 Both roles can play a word aloud in Mandarin — the browser's built-in
 `speechSynthesis` with a `zh-CN` voice, so nothing is downloaded.
@@ -118,6 +121,31 @@ scheduled ──▶ in_progress ──▶ completed
 
 **Complete lesson** asks for what was covered, the homework and private notes, then
 records any student still unmarked as **absent** and closes the register.
+
+## The noticeboard
+
+The sign-in page has two tabs: **Sign in** and **News**. The second is the school's
+noticeboard, and it is the one thing in the app a visitor can read **before they have an
+account** — opening hours, intake dates, exam dates, a closure.
+
+The teacher writes it from **News 公告**. Each notice is a headline, an optional Chinese
+headline, a date and a body, and carries two switches:
+
+- **Published** — a draft is written but not out. Publishing is what puts it on the sign-in
+  page and on every student's dashboard; unpublishing takes it straight back down.
+- **Pinned** — pinned notices lead the board however old they are, and the pinned one is the
+  notice that shows on student dashboards.
+
+Students get the same board under **News**, with the pinned notice repeated as a strip on
+their dashboard so school-wide news reaches the people already signed in, not only visitors.
+
+## My tuition
+
+The school bills the student, so the student can see the bill. **My tuition 学费** shows what
+they still owe, what they have paid, when the next invoice falls due, and every invoice on
+file with its status — *paid · overdue · part paid · waiting*. It is strictly read-only and
+strictly their own: payments are recorded by the teacher in *Payments*, and this page is the
+same data read from the other side.
 
 ## Graduating a student
 
@@ -207,7 +235,8 @@ different accounts. **Reset demo** in the top bar puts everything back.
 3 classes (HSK 1 Foundations, HSK 3 Intermediate, Business Chinese), 2 teachers,
 8 students — one of whom (Gantulga Baasan) has already graduated, so the *Graduated*
 tab is not empty on a fresh demo — 23 lessons spread three weeks either side of today,
-with attendance, homework, grades and skill assessments already filled in. Ten vocabulary decks of
+with attendance, homework, grades and skill assessments already filled in. Four notices sit on the
+noticeboard, three published and one left as a draft. Ten vocabulary decks of
 eight words each, with pinyin and meanings, carry the lessons. Tuition is billed for
 the last three months (180,000₮ · 220,000₮ · 320,000₮ a month) — the older months are
 nearly all settled, this month is not.

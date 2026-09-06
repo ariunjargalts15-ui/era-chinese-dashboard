@@ -262,8 +262,33 @@
       attendance: attendance,
       submissions: submissions,
       progress: progress,
-      payments: payments
+      payments: payments,
+      news: seedNews()
     };
+  }
+
+  /* ── news ──
+     The school's noticeboard. A draft is written but not out yet; publishing is
+     what puts it on the sign-in page, where anyone who has not signed in can
+     read it. Pinned items lead the board however old they are. */
+  function seedNews() {
+    return [
+      { id: 'n1', title: 'Autumn intake is open', cn: '秋季招生开始',
+        body: 'Registration for the autumn HSK 1 and HSK 3 groups is open until the end of the month. ' +
+              'Classes run three evenings a week and start at 18:00. Come to reception or write to us to hold a place.',
+        date: offset(-3), pinned: true, published: true, authorId: 'u_t1' },
+      { id: 'n2', title: 'HSK exam dates announced', cn: 'HSK 考试日期公布',
+        body: 'The next official HSK sitting is in six weeks. Levels 1 to 4 are held on the Saturday, ' +
+              'levels 5 and 6 on the Sunday. Tell your teacher which level you intend to sit so we can prepare you for it.',
+        date: offset(-8), pinned: false, published: true, authorId: 'u_t2' },
+      { id: 'n3', title: 'Mid-autumn festival — no classes', cn: '中秋节放假',
+        body: 'The school is closed for the festival and every lesson that day is moved a week on. ' +
+              'Your timetable already shows the new dates.',
+        date: offset(-15), pinned: false, published: true, authorId: 'u_t1' },
+      { id: 'n4', title: 'New Business Chinese materials', cn: '新商务汉语教材',
+        body: 'Draft — waiting on the printer before this goes out.',
+        date: offset(-1), pinned: false, published: false, authorId: 'u_t2' }
+    ];
   }
 
   /* A school saved before tuition existed keeps its classes, lessons and marks —
@@ -277,6 +302,9 @@
     }
     if (!d.payments) d.payments = [];
     d.payments.forEach(function (p) { if (p.advance == null) p.advance = 0; });
+    /* a school saved before the noticeboard existed gets the seeded one, so the
+       feature is not an empty page on first sight */
+    if (!d.news) d.news = seedNews();
     return d;
   }
 
@@ -381,6 +409,42 @@
       if (!c) return [];
       var marks = this.data.attendance[lesson.id] || {};
       return c.studentIds.filter(function (sid) { return !self.isGraduated(sid) || marks[sid]; });
+    },
+
+    /* ── the noticeboard ──
+       news() is everything, drafts included — the teacher's own list.
+       published() is what the school actually shows: pinned first, then
+       newest, which is the order both the sign-in page and the students read. */
+    newsItem: function (id) {
+      return (this.data.news || []).filter(function (n) { return n.id === id; })[0] || null;
+    },
+    news: function () { return (this.data.news || []).slice().sort(byNews); },
+    published: function () {
+      return (this.data.news || []).filter(function (n) { return n.published; }).sort(byNews);
+    },
+    addNews: function (data) {
+      var n = {
+        id: uid('n'), title: data.title, cn: data.cn || '', body: data.body || '',
+        date: data.date || today(), pinned: !!data.pinned, published: !!data.published,
+        authorId: data.authorId || ''
+      };
+      this.data.news = this.data.news || [];
+      this.data.news.unshift(n);
+      this.save();
+      return n;
+    },
+    updateNews: function (id, data) {
+      var n = this.newsItem(id);
+      if (!n) return null;
+      ['title', 'cn', 'body', 'date'].forEach(function (k) { if (data[k] != null) n[k] = data[k]; });
+      if (data.pinned != null) n.pinned = !!data.pinned;
+      if (data.published != null) n.published = !!data.published;
+      this.save();
+      return n;
+    },
+    deleteNews: function (id) {
+      this.data.news = (this.data.news || []).filter(function (n) { return n.id !== id; });
+      this.save();
     },
 
     classesOfTeacher: function (tid) {
@@ -699,6 +763,12 @@
 
   function byDate(a, b) {
     return a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date);
+  }
+
+  /* pinned notices lead, then the newest — the order a noticeboard is read in */
+  function byNews(a, b) {
+    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+    return b.date.localeCompare(a.date);
   }
 
   global.Store = Store;
