@@ -1606,10 +1606,31 @@
     });
   };
 
+  /* Reversing throws away the date, the method and any advance recorded
+     against the invoice — there is no undo, so it asks first. */
   A.unpayInvoice = function (e) {
-    S.setUnpaid(e.getAttribute('data-id'));
-    App.render();
-    U.toast(T('Payment reversed'), 'back');
+    var p = S.invoice(e.getAttribute('data-id'));
+    if (!p) return;
+    var st = S.user(p.studentId);
+    U.Modal.open({
+      title: T('Reverse this payment'),
+      body: '<p style="margin:0">' +
+        T('The {month} invoice for {name} goes back to unpaid.', {
+          month: U.fmt.month(p.period), name: '<b>' + U.esc(st ? st.name : '') + '</b>'
+        }) + '</p>' +
+        '<p class="tiny muted" style="margin:10px 0 0">' +
+          T('What was recorded — {money}{method}{date} — is discarded and cannot be brought back.', {
+            money: U.fmt.money(p.paidAt ? p.amount : (p.advance || 0)),
+            method: p.method ? ', ' + U.esc(T(p.method)) : '',
+            date: p.paidAt ? ', ' + U.fmt.date(p.paidAt) : ''
+          }) + '</p>',
+      okText: T('Reverse'),
+      onOk: function () {
+        S.setUnpaid(p.id);
+        U.Modal.close(); App.render();
+        U.toast(T('Payment reversed'), 'back');
+      }
+    });
   };
 
   /* A one-off invoice: a make-up lesson, a materials fee, a student billed

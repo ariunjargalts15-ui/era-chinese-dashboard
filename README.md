@@ -343,8 +343,13 @@ to change it — keep it muted and short and it autoplays on its own.
 State lives in three keys: `era-chinese-lite/v1` (the school),
 `era-chinese-lite/live` (open classrooms) and `era-chinese-lite/lang`, plus
 `era-chinese-lite/session` in **sessionStorage**, which is what lets two tabs hold two
-different accounts. **Reset demo** in the top bar puts everything back — it is teachers-only,
-and it deletes every account opened since the seed, so it warns before it runs.
+different accounts. **There is no reset button.** One sat in the top bar next to the date, and on a
+school that is actually being used, a click that erases every student, register,
+grade and invoice does not belong next to ordinary navigation. Nothing in the
+running app can wipe the school.
+
+To reset deliberately, open the browser console and run `Store.reset()`, or
+clear the site's storage. Both are destructive and neither asks twice.
 
 ## What ships in the box
 

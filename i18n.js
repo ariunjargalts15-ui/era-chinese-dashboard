@@ -51,8 +51,6 @@
       'Багш хичээлээ төлөвлөж, онлайнаар заана, ирц бүртгэж, даалгавар дүгнэнэ. Сурагч дуудлагад нэгдэж, самбарыг дагаж, даалгавраа илгээнэ.',
     'Pick an account to open the school.': 'Сургуулийг нээхийн тулд хэрэглэгч сонгоно уу.',
     'Demo school — data is stored in this browser only.': 'Туршилтын сургууль — өгөгдөл зөвхөн энэ браузерт хадгалагдана.',
-    'Reset the demo data': 'Туршилтын өгөгдлийг шинэчлэх', 'Reset demo': 'Дахин эхлүүлэх',
-    'Restore the demo school': 'Туршилтын сургуулийг сэргээх', 'Reset the demo school': 'Туршилтын сургуулийг дахин эхлүүлэх',
     'Every class, lesson, register, grade and assessment goes back to how it started. Anything you added here is lost.':
       'Бүх анги, хичээл, ирц, дүн, үнэлгээ анхны байдалдаа буцна. Таны нэмсэн зүйл устана.',
     'Reset': 'Дахин эхлүүлэх', 'Demo school restored': 'Туршилтын сургууль сэргээгдлээ',
@@ -202,14 +200,6 @@
     'Teacher account created': 'Багшийн бүртгэл үүслээ',
     'They sign in with this email and password. Ask them to change it.':
       'Тэд энэ и-мэйл, нууц үгээр нэвтэрнэ. Солихыг нь хэлээрэй.',
-    'Every account opened since then is deleted too, and everyone is signed out.':
-      'Түүнээс хойш үүсгэсэн бүх бүртгэл мөн устаж, бүгд системээс гарна.',
-    'Start over': 'Шинээр эхлэх',
-    'Start the school over': 'Сургуулийг шинээр эхлүүлэх',
-    'Erase everything and start the school over': 'Бүгдийг устгаж сургуулийг шинээр эхлүүлэх',
-    'Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.':
-      'Бүх сурагч, ирц, дүн, нэхэмжлэх, мэдээ устаж, сургууль анхны байдалдаа буцна.',
-    'The school was reset': 'Сургуулийг шинээр эхлүүллээ',
     'No room set': 'Танхим сонгоогүй',
     'or a new room': 'эсвэл шинэ танхим',
     'e.g. Room 204': 'жишээ нь: 204 тоот',
@@ -258,6 +248,12 @@
     '{name} joined {klass} — {money} invoiced': '{name} {klass}-д элслээ — {money} нэхэмжиллээ',
     '{n} students enrolled — {money} invoiced': '{n} сурагч элслээ — {money} нэхэмжиллээ',
     'That is not a student': 'Энэ сурагч биш байна',
+    'Reverse this payment': 'Энэ төлбөрийг цуцлах',
+    'Reverse': 'Цуцлах',
+    'The {month} invoice for {name} goes back to unpaid.':
+      '{name}-н {month}-н нэхэмжлэх төлөгдөөгүй болж буцна.',
+    'What was recorded — {money}{method}{date} — is discarded and cannot be brought back.':
+      'Бүртгэсэн зүйл — {money}{method}{date} — устах бөгөөд сэргээх боломжгүй.',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -461,8 +457,6 @@
       '教师备课、线上授课、点名并批改作业；学生加入通话、跟随白板并提交作业。',
     'Pick an account to open the school.': '选择一个账号进入学校。',
     'Demo school — data is stored in this browser only.': '演示学校 — 数据仅保存在此浏览器中。',
-    'Reset the demo data': '重置演示数据', 'Reset demo': '重置演示', 'Restore the demo school': '恢复演示学校',
-    'Reset the demo school': '重置演示学校',
     'Every class, lesson, register, grade and assessment goes back to how it started. Anything you added here is lost.':
       '所有班级、课程、考勤、成绩与评估都会回到初始状态，您添加的内容将丢失。',
     'Reset': '重置', 'Demo school restored': '演示学校已恢复', 'Signed in as {name}': '已以 {name} 登录',
@@ -590,14 +584,6 @@
     'Teacher account created': '教师账号已创建',
     'They sign in with this email and password. Ask them to change it.':
       '他们用此邮箱和密码登录，请提醒尽快修改。',
-    'Every account opened since then is deleted too, and everyone is signed out.':
-      '此后创建的所有账号也会被删除，并且所有人都会退出登录。',
-    'Start over': '重新开始',
-    'Start the school over': '重置学校',
-    'Erase everything and start the school over': '清除全部数据并重置学校',
-    'Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.':
-      '所有学生、考勤、成绩、账单和公告都会被清除，学校恢复到初始状态。',
-    'The school was reset': '学校已重置',
     'No room set': '未选择教室',
     'or a new room': '或新建教室',
     'e.g. Room 204': '例如：204 教室',
@@ -645,6 +631,11 @@
     '{name} joined {klass} — {money} invoiced': '{name} 已加入 {klass} —— 已开具 {money}',
     '{n} students enrolled — {money} invoiced': '{n} 名学生已加入 —— 已开具 {money}',
     'That is not a student': '这不是学生账号',
+    'Reverse this payment': '撤销这笔缴费',
+    'Reverse': '撤销',
+    'The {month} invoice for {name} goes back to unpaid.': '{name} 的 {month} 账单将恢复为未缴。',
+    'What was recorded — {money}{method}{date} — is discarded and cannot be brought back.':
+      '已登记的内容 —— {money}{method}{date} —— 将被删除且无法恢复。',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',

@@ -348,10 +348,6 @@
             '<span class="topbar__sp"></span>' +
             langPicker() +
             '<span class="tag tag--gold">' + U.fmt.dateLong(S.today()) + '</span>' +
-            (role === 'teacher'
-              ? '<button class="btn btn--sm" data-act="resetDemo" title="' + T('Erase everything and start the school over') + '">' +
-                  U.icon('shuffle') + T('Start over') + '</button>'
-              : '') +
           '</header>' +
           '<div class="page">' + body + '</div>' +
         '</div>' +
@@ -547,26 +543,12 @@
       render(true);
     };
     A.burger = function () { document.body.classList.toggle('nav-open'); };
-    A.resetDemo = function () {
-      U.Modal.open({
-        title: T('Start the school over'),
-        body: '<p style="margin:0">' + T('Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.') + '</p>' +
-          '<p style="margin:10px 0 0;color:var(--red);font-weight:600">' +
-          T('Every account opened since then is deleted too, and everyone is signed out.') + '</p>',
-        okText: T('Reset'),
-        onOk: function () {
-          S.reset();
-          try { localStorage.removeItem('era-chinese-lite/live'); } catch (e) {}
-          global.Live.load();
-          App.filters = {}; App.flash = null;
-          if (lastLive) { global.LiveView.unmount(); lastLive = null; }
-          if (App.session && !S.user(App.session.userId)) {
-            App.session = null; saveSession(); location.hash = '';
-          }
-          U.Modal.close(); render(true); U.toast(T('The school was reset'), 'shuffle');
-        }
-      });
-    };
+    /* There is no "start over" button, on purpose. It sat in the top bar next
+       to the date, one press from erasing every student, register, grade and
+       invoice in the school — and on a school that is actually being used,
+       nothing that destructive belongs a click away from ordinary navigation.
+       Store.reset() is still there for a deliberate reset from the console;
+       the README says how. */
   }
 
   /* ── event wiring ─────────────────────────────────────── */
