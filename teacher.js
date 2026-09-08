@@ -62,6 +62,7 @@
 
   /* ══ DASHBOARD ═══════════════════════════════════════ */
   function dashboard() {
+    var waitingForClass = S.unassignedStudents();
     var t = me();
     var classes = S.classesOfTeacher(t.id);
     var lessons = S.lessonsOfTeacher(t.id);
@@ -113,6 +114,12 @@
         '<div class="card">' +
           '<div class="card__h"><h3>' + T('Needs attention') + '</h3></div>' +
           '<div class="list">' +
+            /* a sign-up nobody has placed is the most time-sensitive of these:
+               until it is done that student can see nothing at all */
+            attnRow('users', T('{n} students are not in a class yet', { n: waitingForClass.length }),
+              waitingForClass.slice(0, 3).map(function (u) { return u.name; }).join(', ') ||
+                T('New sign-ups land here'),
+              '#/t/students', waitingForClass.length) +
             attnRow('inbox', T('{n} assignments to grade', { n: ungraded.length }), T('Homework handed in and waiting'), '#/t/homework', ungraded.length) +
             attnRow('alert', T('{n} registers still open', { n: openRegisters.length }), T('Past lessons never closed out'), '#/t/lessons', openRegisters.length) +
             attnRow('grad', T('{n} students below 70%', { n: low.length }), T('Attendance needs a conversation'), '#/t/students', low.length) +
@@ -424,78 +431,142 @@
   }
 
   /* ══ STUDENTS ════════════════════════════════════════ */
-  /* Graduates never leave this list — they move to their own tab, where the
-     whole record stays open: attendance, marks, tuition and all. */
+  /* Built from the school's students, not from class rosters. Reading it off
+     the rosters meant anyone not yet in a class — someone who registered on
+     the public site, or who was created here without a class picked — was
+     nowhere on this page at all, and so could never be enrolled either.
+
+     Everyone in the school shows up. Whoever has no class yet leads the list,
+     because they are the ones still needing something done. */
   function students() {
-    var t = me();
-    var classes = S.classesOfTeacher(t.id);
-    var seen = {}, all = [];
-    classes.forEach(function (c) {
-      c.studentIds.forEach(function (sid) {
-        if (seen[sid]) { seen[sid].classes.push(c); return; }
-        seen[sid] = { student: S.user(sid), classes: [c] };
-        all.push(seen[sid]);
-      });
+    var all = S.students().map(function (u) {
+      return { student: u, classes: S.classesOfStudent(u.id) };
     });
 
-    var f = App.filters.studentScope || 'active';
+    var isWaiting = function (r) { return !S.isGraduated(r.student) && r.classes.length === 0; };
+    var nWaiting = all.filter(isWaiting).length;
+    var nGrad = all.filter(function (r) { return S.isGraduated(r.student); }).length;
+    var nStudying = all.length - nGrad - nWaiting;
+
+    /* land on the waiting list when there is one — it is the actionable tab */
+    var f = App.filters.studentScope || (nWaiting ? 'waiting' : 'active');
     var rows = all.filter(function (r) {
-      if (f === 'active') return !S.isGraduated(r.student);
+      if (f === 'waiting') return isWaiting(r);
+      if (f === 'active') return !S.isGraduated(r.student) && r.classes.length > 0;
       if (f === 'graduated') return S.isGraduated(r.student);
       return true;
     });
-    var nGrad = all.filter(function (r) { return S.isGraduated(r.student); }).length;
+
+    /* newest first among those waiting, so a fresh sign-up is at the top */
+    if (f === 'waiting' || f === 'all') {
+      rows.sort(function (a, b) {
+        var aw = isWaiting(a) ? 0 : 1, bw = isWaiting(b) ? 0 : 1;
+        if (aw !== bw) return aw - bw;
+        return String(b.student.joinedAt || '').localeCompare(String(a.student.joinedAt || ''));
+      });
+    }
 
     return '<div class="sect">' +
-        '<div class="roleTabs" style="margin:0;max-width:400px;flex:1">' +
-          [['active', T('Studying'), all.length - nGrad],
+        '<div class="roleTabs" style="margin:0;max-width:520px;flex:1">' +
+          [['waiting', T('Needs a class'), nWaiting],
+           ['active', T('Studying'), nStudying],
            ['graduated', T('Graduated'), nGrad],
            ['all', T('All'), all.length]].map(function (k) {
             return '<button data-act="setStudentScope" data-v="' + k[0] + '" class="' + (f === k[0] ? 'on' : '') + '">' +
-              k[1] + ' <span class="num">' + k[2] + '</span></button>';
+              k[1] + ' <span class="num' + (k[0] === 'waiting' && k[2] ? ' num--alert' : '') + '">' + k[2] + '</span></button>';
           }).join('') +
         '</div><span class="sp"></span>' +
         '<button class="btn" data-act="newTeacher">' + U.icon('users') + T('Add a teacher') + '</button>' +
         '<button class="btn btn--pri" data-act="newStudent">' + U.icon('plus') + T('New student') + '</button>' +
       '</div>' +
-      '<div class="card"><div class="card__h"><h3>' + T('My students') + '</h3>' +
+
+      (nWaiting && f !== 'waiting'
+        ? '<div class="card" style="margin-bottom:14px;border-color:var(--amber)">' +
+            '<div class="card__b" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">' +
+              '<div class="av av--sm" style="background:var(--amber)">' + U.icon('alert', 14) + '</div>' +
+              '<b style="flex:1;min-width:200px">' +
+                T('{n} students are not in a class yet', { n: nWaiting }) + '</b>' +
+              '<button class="btn btn--sm" data-act="setStudentScope" data-v="waiting">' +
+                T('Show them') + U.icon('chevron') + '</button>' +
+            '</div></div>'
+        : '') +
+
+      '<div class="card"><div class="card__h"><h3>' +
+        (f === 'waiting' ? T('Waiting for a class') : T('Students')) + '</h3>' +
         U.gloss('学生') + '<span class="sp"></span>' +
         '<span class="tag">' + rows.length + '</span></div>' +
+
       (rows.length ? '<div class="tw"><table><thead><tr>' +
         '<th>' + T('Student') + '</th><th>' + T('Classes') + '</th><th>' + T('Attendance') + '</th><th>' +
         T('Homework avg') + '</th><th>' + T('Skills') + '</th><th></th>' +
       '</tr></thead><tbody>' +
-      rows.map(function (r) {
-        var rate = S.attendanceRate(S.attendanceOfStudent(r.student.id));
-        var mine = S.data.submissions.filter(function (s) { return s.studentId === r.student.id && s.grade != null; });
-        var avg = mine.length ? Math.round(mine.reduce(function (a, s) { return a + s.grade; }, 0) / mine.length) : null;
-        var pg = S.progressOf(r.classes[0].id, r.student.id);
-        var skill = pg ? Math.round((pg.speaking + pg.listening + pg.reading + pg.writing) / 4) : null;
-        var grad = S.isGraduated(r.student);
-        return '<tr' + (grad ? ' style="opacity:.68"' : '') + '>' +
-          '<td><div style="display:flex;align-items:center;gap:10px">' + U.avatar(r.student) +
-            '<div><b>' + U.esc(r.student.name) + gradTag(r.student) + '</b>' +
-            '<div class="tiny muted cn">' + U.esc(r.student.cn) +
-              (grad && r.student.graduatedAt
-                ? ' <span class="muted">· ' + T('finished {date}', { date: U.fmt.date(r.student.graduatedAt) }) + '</span>'
-                : '') + '</div></div></div></td>' +
-          '<td class="tiny">' + r.classes.map(function (c) { return U.esc(c.name); }).join('<br>') + '</td>' +
-          '<td style="min-width:130px">' + (rate == null ? '<span class="muted">—</span>' :
-            '<div class="tiny num" style="margin-bottom:4px">' + rate + '%</div>' +
-            U.bar(rate, rate >= 85 ? 'var(--jade)' : rate >= 70 ? 'var(--amber)' : 'var(--red)')) + '</td>' +
-          '<td class="num">' + (avg == null ? '<span class="muted">—</span>' : avg) + '</td>' +
-          '<td class="num">' + (skill == null ? '<span class="muted">—</span>' : skill) + '</td>' +
-          '<td style="text-align:right;white-space:nowrap">' +
-            '<button class="btn btn--sm" data-act="' + (grad ? 'reactivateStudent' : 'graduateStudent') + '" data-id="' + r.student.id + '">' +
-              U.icon(grad ? 'shuffle' : 'grad', 14) + (grad ? T('Bring back') : T('Graduate')) + '</button> ' +
-            '<button class="btn btn--sm" data-act="studentCard" data-id="' + r.student.id +
-            '" data-class="' + r.classes[0].id + '">' + T('Open') + '</button></td></tr>';
-      }).join('') +
+      rows.map(studentRow).join('') +
       '</tbody></table></div>'
-      : U.empty('users', f === 'graduated' ? T('Nobody has graduated yet') : T('No students yet'),
-          f === 'graduated' ? T('Finished students are kept here with their whole record.')
-                            : T('Create a class and enrol students in it.'))) +
+      : U.empty('users',
+          f === 'waiting' ? T('Everyone has a class')
+          : f === 'graduated' ? T('Nobody has graduated yet')
+          : T('No students yet'),
+          f === 'waiting' ? T('New sign-ups land here until you put them in one.')
+          : f === 'graduated' ? T('Finished students are kept here with their whole record.')
+          : T('Create a student, or wait for someone to sign up on the school site.'))) +
       '</div>';
+  }
+
+  function studentRow(r) {
+    var s = r.student;
+    var waiting = !S.isGraduated(s) && r.classes.length === 0;
+    var grad = S.isGraduated(s);
+    var rate = S.attendanceRate(S.attendanceOfStudent(s.id));
+    var marked = S.data.submissions.filter(function (x) { return x.studentId === s.id && x.grade != null; });
+    var avg = marked.length ? Math.round(marked.reduce(function (a, x) { return a + x.grade; }, 0) / marked.length) : null;
+    /* a student with no class has no progress record to read a skill score from */
+    var pg = r.classes.length ? S.progressOf(r.classes[0].id, s.id) : null;
+    var skill = pg ? Math.round((pg.speaking + pg.listening + pg.reading + pg.writing) / 4) : null;
+    var asked = waiting ? S.requestedClass(s.id) : null;
+
+    return '<tr' + (grad ? ' style="opacity:.68"' : '') + '>' +
+      '<td><div style="display:flex;align-items:center;gap:10px">' + U.avatar(s) +
+        '<div><b>' + U.esc(s.name) + gradTag(s) +
+          (waiting ? ' <span class="tag tag--amber">' + T('Needs a class') + '</span>' : '') + '</b>' +
+        '<div class="tiny muted">' +
+          (s.cn ? '<span class="cn">' + U.esc(s.cn) + '</span> · ' : '') + U.esc(s.email || '') +
+          (grad && s.graduatedAt
+            ? ' <span class="muted">· ' + T('finished {date}', { date: U.fmt.date(s.graduatedAt) }) + '</span>'
+            : '') +
+        '</div></div></div></td>' +
+
+      '<td class="tiny">' +
+        (r.classes.length
+          ? r.classes.map(function (c) { return U.esc(c.name); }).join('<br>')
+          : '<span class="muted">' + T('none yet') + '</span>' +
+            (asked ? '<div class="tiny muted">' + T('asked for {klass}', { klass: U.esc(asked.name) }) + '</div>' : '') +
+            (s.joinedAt ? '<div class="tiny muted">' + T('signed up {date}', { date: U.fmt.date(s.joinedAt) }) + '</div>' : '')) +
+      '</td>' +
+
+      '<td style="min-width:130px">' + (rate == null ? '<span class="muted">—</span>' :
+        '<div class="tiny num" style="margin-bottom:4px">' + rate + '%</div>' +
+        U.bar(rate, rate >= 85 ? 'var(--jade)' : rate >= 70 ? 'var(--amber)' : 'var(--red)')) + '</td>' +
+      '<td class="num">' + (avg == null ? '<span class="muted">—</span>' : avg) + '</td>' +
+      '<td class="num">' + (skill == null ? '<span class="muted">—</span>' : skill) + '</td>' +
+
+      /* Built from what is actually true of this student rather than from one
+         either/or, because the combinations really do all occur: a graduate
+         can have no class (they finished, then were unenrolled), and the card
+         needs a class to open against. */
+      '<td style="text-align:right;white-space:nowrap">' +
+        (waiting
+          ? '<button class="btn btn--pri btn--sm" data-act="placeStudent" data-id="' + s.id + '">' +
+              U.icon('plus', 14) + T('Put in a class') + '</button> '
+          : '<button class="btn btn--sm" data-act="placeStudent" data-id="' + s.id + '">' +
+              U.icon('layers', 14) + T('Enrol') + '</button> ') +
+        '<button class="btn btn--sm" data-act="' + (grad ? 'reactivateStudent' : 'graduateStudent') +
+          '" data-id="' + s.id + '">' +
+          U.icon(grad ? 'shuffle' : 'grad', 14) + (grad ? T('Bring back') : T('Graduate')) + '</button>' +
+        (r.classes.length
+          ? ' <button class="btn btn--sm" data-act="studentCard" data-id="' + s.id +
+              '" data-class="' + r.classes[0].id + '">' + T('Open') + '</button>'
+          : '') +
+      '</td></tr>';
   }
 
   /* ══ NEWS ════════════════════════════════════════════ */
@@ -923,8 +994,13 @@
         });
         if (r.error) { U.toast(T(r.error), 'alert'); return; }
         var cid = U.Modal.val('classId');
-        if (cid) S.enroll(cid, r.user.id);
-        U.Modal.close(); App.render(); U.toast(T('Student created'));
+        if (cid) S.placeStudent(r.user.id, cid);
+        U.Modal.close(); App.render();
+        /* say where they went, since "no class" is the case that used to
+           make a new student vanish */
+        U.toast(cid
+          ? T('{name} joined {klass}', { name: r.user.name, klass: S.klass(cid).name })
+          : T('{name} added — they still need a class', { name: r.user.name }), 'check');
       }
     });
   };
@@ -1052,6 +1128,57 @@
       onOk: function () {
         S.deleteNews(n.id);
         U.Modal.close(); App.render(); U.toast(T('Notice deleted'), 'trash');
+      }
+    });
+  };
+
+  /* ── putting a student in a class ──
+     The one thing the Students page could never do before, because a student
+     with no class was not on it. Pre-picks whatever they asked for when they
+     signed up, and lists the classes they are not already in. */
+  A.placeStudent = function (e) {
+    var s = S.user(e.getAttribute('data-id'));
+    if (!s) return;
+    var already = {};
+    S.classesOfStudent(s.id).forEach(function (c) { already[c.id] = 1; });
+    var open = S.data.classes.filter(function (c) { return !already[c.id]; });
+    var asked = S.requestedClass(s.id);
+
+    if (!open.length) {
+      U.toast(S.data.classes.length
+        ? T('{name} is already in every class', { name: s.name })
+        : T('Create a class first'), 'alert');
+      return;
+    }
+
+    U.Modal.open({
+      title: T('Put {name} in a class', { name: s.name }), cn: '\u5206\u73ed',
+      body: (asked
+          ? '<p class="tiny muted" style="margin:0 0 12px">' +
+              T('They asked for {klass} when they signed up.', { klass: U.esc(asked.name) }) + '</p>'
+          : '') +
+        '<label class="field"><span>' + T('Class') + '</span><select name="classId">' +
+          open.map(function (c) {
+            var n = S.rosterOf(c.id).length;
+            return '<option value="' + c.id + '"' +
+              (asked && asked.id === c.id ? ' selected' : '') + '>' +
+              U.esc(c.name) + ' \u00b7 ' + U.esc(c.days || '') + ' ' + U.esc(c.time || '') +
+              ' \u00b7 ' + T('{n} enrolled', { n: n }) + '</option>';
+          }).join('') +
+        '</select></label>' +
+        (S.classesOfStudent(s.id).length
+          ? '<p class="tiny muted" style="margin:0">' +
+              T('Already in: {list}', {
+                list: U.esc(S.classesOfStudent(s.id).map(function (c) { return c.name; }).join(', '))
+              }) + '</p>'
+          : ''),
+      okText: T('Enrol'),
+      onOk: function () {
+        var cid = U.Modal.val('classId');
+        var r = S.placeStudent(s.id, cid);
+        if (r.error) { U.toast(T(r.error), 'alert'); return; }
+        U.Modal.close(); App.render();
+        U.toast(T('{name} joined {klass}', { name: s.name, klass: S.klass(cid).name }), 'check');
       }
     });
   };

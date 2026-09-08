@@ -525,6 +525,37 @@
       var self = this;
       return this.students().filter(function (u) { return !self.isGraduated(u); });
     },
+    /* ── students with nowhere to be ──
+       Someone who registers on the public site, or who a teacher creates
+       without picking a class, belongs to no class at all. They are the ones
+       the school still has to do something about, so they get a name of their
+       own rather than being invisible until somebody enrols them. */
+    unassignedStudents: function () {
+      var self = this;
+      return this.students().filter(function (u) {
+        return !self.isGraduated(u) && self.classesOfStudent(u.id).length === 0;
+      });
+    },
+
+    /* What a student asked for when they registered. It is a request, not an
+       enrolment — the school decides who goes in which class — so it is kept
+       separately and cleared once they are placed. */
+    requestedClass: function (sid) {
+      var u = this.user(sid);
+      return u && u.wantsClassId ? this.klass(u.wantsClassId) : null;
+    },
+
+    /* Enrolling is what clears the request: it has been answered. */
+    placeStudent: function (sid, classId) {
+      var u = this.user(sid);
+      if (!u || u.role !== 'student') return { error: 'Wrong email or password' };
+      if (!this.klass(classId)) return { error: 'Pick a class' };
+      this.enroll(classId, sid);
+      if (u.wantsClassId) { delete u.wantsClassId; }
+      this.save();
+      return { user: u };
+    },
+
     graduates: function () {
       var self = this;
       return this.students().filter(function (u) { return self.isGraduated(u); });
@@ -686,6 +717,8 @@
       var u = this.addStudent({ name: name, cn: data.cn || '', email: email });
       u.email = email;
       u.joinedAt = today();
+      /* only a request, and only for a class that exists */
+      if (data.wantsClassId && this.klass(data.wantsClassId)) u.wantsClassId = data.wantsClassId;
       A.setPassword(u, data.password);
       this.save();
       return { user: u };

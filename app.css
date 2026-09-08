@@ -96,6 +96,11 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
   font-weight:600; color:var(--ink-3); cursor:pointer; transition:.15s;
 }
 .roleTabs button.on { background:var(--card); color:var(--ink); box-shadow:var(--sh); }
+/* a tab whose count is work waiting to be done */
+.roleTabs .num--alert {
+  background:var(--amber); color:#fff; border-radius:9px;
+  padding:1px 6px; font-weight:700;
+}
 .accounts { display:flex; flex-direction:column; gap:8px; max-height:46vh; overflow:auto; padding-right:4px; }
 
 /* ── the public noticeboard on the sign-in side ── */

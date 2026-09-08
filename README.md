@@ -212,6 +212,27 @@ file with its status — *paid · overdue · part paid · waiting*. It is strict
 strictly their own: payments are recorded by the teacher in *Payments*, and this page is the
 same data read from the other side.
 
+## Getting a student into a class
+
+Registering does not enrol anyone. A student who signs up on the public site,
+or who a teacher creates without picking a class, is **in the school but in no
+class** — and the school decides where they go.
+
+So they need somewhere to be seen while they wait, and that is what the
+**Needs a class** tab on *Students* is. It leads the tabs, carries an amber
+count, and the page opens on it whenever anyone is waiting. The dashboard's
+*Needs attention* list says the same thing, and each row has **Put in a class**,
+pre-picking whatever course they asked for when they signed up.
+
+The join form asks *Which course interests you?* — recorded as a request, not
+an enrolment, and cleared once they are placed. Until then the student's own
+dashboard says they are waiting and names the class they asked for, instead of
+showing an empty timetable.
+
+> The *Students* page is built from the school's students, not from class
+> rosters. It used to read the rosters, which meant anyone not yet in a class
+> appeared nowhere — and so could never be enrolled either.
+
 ## Rooms
 
 The school's teaching rooms are a list, not something retyped on every class —

@@ -216,6 +216,43 @@
     '{room} is already booked for {klass} at that time':
       '{room} тэр цагт {klass}-д аль хэдийн захиалагдсан байна',
     'Rooms': 'Танхимууд',
+    /* placing students in classes */
+    'Needs a class': 'Анги хэрэгтэй',
+    'Waiting for a class': 'Анги хүлээж буй',
+    'Students': 'Сурагчид',
+    '{n} students are not in a class yet': '{n} сурагч ангид ороогүй байна',
+    'Show them': 'Харах',
+    'New sign-ups land here': 'Шинэ бүртгэл энд ирнэ',
+    'New sign-ups land here until you put them in one.':
+      'Шинэ бүртгэл ангид оруулах хүртэл энд хүлээнэ.',
+    'Everyone has a class': 'Бүгд ангитай',
+    'Create a student, or wait for someone to sign up on the school site.':
+      'Сурагч үүсгэх, эсвэл сургуулийн хуудсаар хэн нэгэн бүртгүүлэхийг хүлээнэ үү.',
+    'none yet': 'одоогоор алга',
+    'asked for {klass}': '{klass}-г хүссэн',
+    'signed up {date}': '{date}-нд бүртгүүлсэн',
+    'Put in a class': 'Ангид оруулах',
+    'Enrol': 'Элсүүлэх',
+    'Put {name} in a class': '{name}-г ангид оруулах',
+    'They asked for {klass} when they signed up.': 'Бүртгүүлэхдээ {klass}-г хүссэн байна.',
+    'Already in: {list}': 'Аль хэдийн: {list}',
+    '{name} joined {klass}': '{name} {klass}-д элслээ',
+    '{name} added — they still need a class': '{name} нэмэгдлээ — ангид оруулах шаардлагатай',
+    '{name} is already in every class': '{name} бүх ангид аль хэдийн байна',
+    'Create a class first': 'Эхлээд анги үүсгэнэ үү',
+    'Pick a class': 'Анги сонгоно уу',
+
+    /* what the student sees while they wait */
+    'Which course interests you?': 'Аль хичээл сонирхож байна?',
+    'Not sure yet': 'Хараахан шийдээгүй',
+    'The school will confirm your class.': 'Таны ангийг сургууль баталгаажуулна.',
+    'You are not in a class yet': 'Та хараахан ангид ороогүй байна',
+    'You asked for {klass}. The school will confirm your place, and your timetable appears here as soon as it does.':
+      'Та {klass}-г хүссэн байна. Сургууль таны байрыг баталгаажуулмагц хуваарь тань энд гарч ирнэ.',
+    'The school places you in a class. Your timetable, homework and vocabulary all appear here once it has.':
+      'Сургууль таныг ангид хуваарилна. Түүний дараа хуваарь, даалгавар, үгсийн сан бүгд энд гарна.',
+    'Anything urgent? The contact details are on the school site.':
+      'Яаралтай асуудал байвал сургуулийн хуудсанд холбоо барих мэдээлэл байгаа.',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -562,6 +599,42 @@
     '{room} is already booked for {klass} at that time':
       '{room} 在该时段已被 {klass} 占用',
     'Rooms': '教室',
+    /* placing students in classes */
+    'Needs a class': '待分班',
+    'Waiting for a class': '等待分班',
+    'Students': '学生',
+    '{n} students are not in a class yet': '{n} 名学生尚未分班',
+    'Show them': '查看',
+    'New sign-ups land here': '新注册会出现在这里',
+    'New sign-ups land here until you put them in one.': '新注册的学生会留在这里，直到你为他们分班。',
+    'Everyone has a class': '所有人都已分班',
+    'Create a student, or wait for someone to sign up on the school site.':
+      '创建学生，或等待有人在学校网站上注册。',
+    'none yet': '暂无',
+    'asked for {klass}': '希望就读 {klass}',
+    'signed up {date}': '{date} 注册',
+    'Put in a class': '分班',
+    'Enrol': '加入班级',
+    'Put {name} in a class': '为 {name} 分班',
+    'They asked for {klass} when they signed up.': '注册时希望就读 {klass}。',
+    'Already in: {list}': '已在：{list}',
+    '{name} joined {klass}': '{name} 已加入 {klass}',
+    '{name} added — they still need a class': '{name} 已添加 —— 仍需分班',
+    '{name} is already in every class': '{name} 已在所有班级中',
+    'Create a class first': '请先创建班级',
+    'Pick a class': '请选择班级',
+
+    /* what the student sees while they wait */
+    'Which course interests you?': '你对哪门课程感兴趣？',
+    'Not sure yet': '还没决定',
+    'The school will confirm your class.': '学校会确认你的班级。',
+    'You are not in a class yet': '你还没有分班',
+    'You asked for {klass}. The school will confirm your place, and your timetable appears here as soon as it does.':
+      '你希望就读 {klass}。学校确认后，课表就会出现在这里。',
+    'The school places you in a class. Your timetable, homework and vocabulary all appear here once it has.':
+      '学校会为你分班。分班后，课表、作业和生词都会出现在这里。',
+    'Anything urgent? The contact details are on the school site.':
+      '有急事？学校网站上有联系方式。',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',

@@ -160,8 +160,21 @@
                 field('email', 'Email', 'email', 'mail', 'username') +
                 field('password', 'Password', 'password', 'lock', 'new-password') +
                 field('confirm', 'Repeat password', 'password', 'lock', 'new-password') +
+                /* a request, not an enrolment — the school still places them */
+                (S.data.classes.length
+                  ? '<label class="field"><span>' + T('Which course interests you?') + '</span>' +
+                      '<select name="wantsClassId">' +
+                        '<option value="">' + T('Not sure yet') + '</option>' +
+                        S.data.classes.map(function (c) {
+                          return '<option value="' + c.id + '">' + U.esc(c.name) +
+                            (c.days ? ' · ' + U.esc(U.daysLabel(c.days)) + ' ' + U.esc(c.time || '') : '') +
+                            '</option>';
+                        }).join('') +
+                      '</select></label>'
+                  : '') +
                 '<p class="tiny muted" style="margin:-2px 0 2px">' +
-                  T('At least 8 characters, with letters and numbers.') + '</p>' +
+                  T('At least 8 characters, with letters and numbers.') +
+                  (S.data.classes.length ? ' ' + T('The school will confirm your class.') : '') + '</p>' +
                 '<button class="btn btn--pri btn--wide" type="submit">' + T('Create an account') + '</button>' +
               '</form>'
             : '<form class="auth__form" data-form="login">' +
@@ -490,7 +503,8 @@
     A.doJoin = function (form) {
       var r = S.registerStudent({
         name: val(form, 'name'), email: val(form, 'email'),
-        password: val(form, 'password'), confirm: val(form, 'confirm')
+        password: val(form, 'password'), confirm: val(form, 'confirm'),
+        wantsClassId: val(form, 'wantsClassId')
       });
       if (r.error) { App.authError = r.error; render(); return; }
       enter(r.user);

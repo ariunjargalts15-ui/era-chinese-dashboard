@@ -59,6 +59,11 @@
     var words = 0;
     lessons.filter(function (l) { return l.status === 'completed'; }).forEach(function (l) { words += l.words.length; });
 
+    /* Registering does not put anyone in a class — the school does that. Until
+       it has, the dashboard is empty of lessons through no fault of theirs, so
+       say what is happening rather than showing a blank timetable. */
+    if (!done && !classes.length) return waitingPanel(s) + noticeStrip();
+
     return '' +
       (done ? gradBanner() : live ? liveBanner(live) : '') +
       noticeStrip() +
@@ -138,6 +143,24 @@
           '<b>' + U.esc(n.title) + '</b>' +
           '<div class="tiny muted" style="margin-top:3px">' + U.esc(n.body) + '</div></div>' +
         '<a class="btn btn--sm" href="#/s/news">' + T('All news') + U.icon('chevron') + '</a>' +
+      '</div></div>';
+  }
+
+  /* what a student sees between signing up and being placed */
+  function waitingPanel(s) {
+    var asked = S.requestedClass(s.id);
+    return '<div class="card" style="margin-bottom:16px">' +
+      '<div class="card__b" style="text-align:center;padding:34px 24px">' +
+        '<div class="av" style="background:var(--amber);margin:0 auto 14px">' + U.icon('clock') + '</div>' +
+        '<h3 style="font-size:19px">' + T('You are not in a class yet') + '</h3>' +
+        '<p class="muted" style="margin:8px auto 0;max-width:46ch">' +
+          (asked
+            ? T('You asked for {klass}. The school will confirm your place, and your timetable appears here as soon as it does.',
+                { klass: U.esc(asked.name) })
+            : T('The school places you in a class. Your timetable, homework and vocabulary all appear here once it has.')) +
+        '</p>' +
+        '<p class="tiny muted" style="margin:16px 0 0">' +
+          T('Anything urgent? The contact details are on the school site.') + '</p>' +
       '</div></div>';
   }
 
