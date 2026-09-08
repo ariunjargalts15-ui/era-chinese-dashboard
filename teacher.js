@@ -708,6 +708,45 @@
   A.say = function (e) { U.speak(e.getAttribute('data-text')); };
 
   /* ── classes ── */
+  /* ── the room picker ──
+     A class picks from the rooms the school already has, so the same room is
+     not spelled three ways. The box underneath is the way to add one that is
+     not on the list yet; whatever is typed there wins and joins the list. */
+  function roomField(current) {
+    var rooms = S.rooms();
+    var known = rooms.filter(function (r) { return r === current; }).length > 0;
+    return '<label class="field"><span>' + T('Room') + '</span>' +
+        '<select name="room">' +
+          '<option value="">' + T('No room set') + '</option>' +
+          (current && !known
+            ? '<option value="' + U.esc(current) + '" selected>' + U.esc(current) + '</option>'
+            : '') +
+          rooms.map(function (r) {
+            return '<option value="' + U.esc(r) + '"' + (r === current ? ' selected' : '') + '>' +
+              U.esc(r) + '</option>';
+          }).join('') +
+        '</select></label>' +
+      '<label class="field"><span>' + T('or a new room') + '</span>' +
+        '<input name="roomNew" placeholder="' + T('e.g. Room 204') + '"></label>';
+  }
+
+  /* what the two fields add up to */
+  function pickedRoom() {
+    var typed = U.Modal.val('roomNew');
+    if (typed) return S.addRoom(typed);
+    return U.Modal.val('room');
+  }
+
+  /* Double-booking a room is a real mistake, but it is the school's call —
+     this says so and saves anyway rather than blocking the form. */
+  function warnClash(room, days, time, exceptId) {
+    var hit = S.roomClashes(room, days, time, exceptId)[0];
+    if (hit) {
+      U.toast(T('{room} is already booked for {klass} at that time',
+        { room: room, klass: hit.name }), 'alert');
+    }
+  }
+
   A.newClass = function () {
     var t = me();
     U.Modal.open({
@@ -718,8 +757,10 @@
               '<label class="field"><span>' + T('Chinese name') + '</span><input name="cn" placeholder="中级四班"></label>' +
               '<label class="field"><span>' + T('Level') + '</span><select name="level">' + levelOptions('HSK 4') + '</select></label>' +
             '</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">' +
-              '<label class="field"><span>' + T('Room') + '</span><input name="room" placeholder="Room 204"></label>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+              roomField('') +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
               '<label class="field"><span>' + T('Time') + '</span><input type="time" name="time" value="18:00"></label>' +
               '<label class="field"><span>' + T('Monthly fee') + '</span>' +
                 '<input type="number" name="fee" min="0" step="1000" value="' + S.DEFAULT_FEE + '"></label>' +
@@ -739,9 +780,12 @@
         var name = U.Modal.val('name');
         if (!name) { U.toast(T('The class needs a name'), 'alert'); return; }
         var days = checked('day').join(' · ');
+        var room = pickedRoom();
+        var time = U.Modal.val('time') || '18:00';
+        warnClash(room, days, time, null);
         var c = S.addClass({
           name: name, cn: U.Modal.val('cn'), level: U.Modal.val('level'),
-          room: U.Modal.val('room'), time: U.Modal.val('time') || '18:00',
+          room: room, time: time,
           fee: U.Modal.val('fee') === '' ? S.DEFAULT_FEE : +U.Modal.val('fee'),
           days: days, teacherId: t.id, studentIds: checked('enrol')
         });
@@ -760,8 +804,9 @@
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
               '<label class="field"><span>' + T('Chinese name') + '</span><input name="cn" value="' + U.esc(c.cn) + '"></label>' +
               '<label class="field"><span>' + T('Level') + '</span><select name="level">' + levelOptions(c.level) + '</select></label></div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">' +
-              '<label class="field"><span>' + T('Room') + '</span><input name="room" value="' + U.esc(c.room) + '"></label>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+              roomField(c.room) + '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
               '<label class="field"><span>' + T('Time') + '</span><input type="time" name="time" value="' + U.esc(c.time) + '"></label>' +
               '<label class="field"><span>' + T('Monthly fee') + '</span><input type="number" name="fee" min="0" step="1000" value="' +
                 (c.fee == null ? S.DEFAULT_FEE : c.fee) + '"></label></div>' +
@@ -772,9 +817,13 @@
               }).join('') + '</div></div>',
       okText: T('Save'),
       onOk: function () {
+        var room = pickedRoom();
+        var time = U.Modal.val('time');
+        var days = checked('day').join(' · ');
+        warnClash(room, days, time, c.id);
         S.updateClass(c.id, {
           name: U.Modal.val('name') || c.name, cn: U.Modal.val('cn'), level: U.Modal.val('level'),
-          room: U.Modal.val('room'), time: U.Modal.val('time'), days: checked('day').join(' · '),
+          room: room, time: time, days: days,
           fee: U.Modal.val('fee') === '' ? null : +U.Modal.val('fee')
         });
         U.Modal.close(); App.render(); U.toast(T('Class saved'));

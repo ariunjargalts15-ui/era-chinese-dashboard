@@ -274,7 +274,8 @@
       submissions: submissions,
       progress: progress,
       payments: payments,
-      news: seedNews()
+      news: seedNews(),
+      rooms: ['Room 102', 'Room 201', 'Room 305']
     };
   }
 
@@ -285,6 +286,62 @@
   /* The noticeboard starts empty — whatever a real school announces is
      written by a real teacher. */
   function seedNews() { return []; }
+
+  /* ── clearing out the demo ──
+     The seed used to ship eight invented students and two invented teachers.
+     Emptying seed() only helps a browser that has never run the app: a school
+     already saved keeps them, and with them a staff login whose password is
+     printed in the README. So they are removed from saved schools too.
+
+     Matched on the exact seeded email, never on role or id, so a real account
+     is never caught by this — including one that reuses a seeded id. */
+  var DEMO_EMAILS = [
+    'sarangerel@erachinese.mn', 'liwei@erachinese.mn',
+    'anujin@student.mn', 'baterdene@student.mn', 'nomin@student.mn',
+    'temuulen@student.mn', 'solongo@student.mn', 'khulan@student.mn',
+    'gantulga@student.mn', 'odval@student.mn'
+  ];
+
+  function dropDemoUsers(d) {
+    var doomed = {};
+    d.users = (d.users || []).filter(function (u) {
+      var demo = DEMO_EMAILS.indexOf(String(u.email || '').toLowerCase()) > -1;
+      if (demo) doomed[u.id] = 1;
+      return !demo;
+    });
+    if (!Object.keys(doomed).length) return d;
+
+    /* everything that hangs off a person goes with them, or the school is
+       left counting registers and invoices for people who do not exist */
+    (d.classes || []).forEach(function (c) {
+      c.studentIds = (c.studentIds || []).filter(function (id) { return !doomed[id]; });
+    });
+    Object.keys(d.attendance || {}).forEach(function (lid) {
+      Object.keys(d.attendance[lid]).forEach(function (sid) {
+        if (doomed[sid]) delete d.attendance[lid][sid];
+      });
+    });
+    d.submissions = (d.submissions || []).filter(function (x) { return !doomed[x.studentId]; });
+    d.progress = (d.progress || []).filter(function (x) { return !doomed[x.studentId]; });
+    d.payments = (d.payments || []).filter(function (x) { return !doomed[x.studentId]; });
+
+    /* a class whose teacher just left needs one that is still here, and if the
+       demo teachers were the only ones, the school needs a way back in */
+    var staff = d.users.filter(function (u) { return u.role === 'teacher'; });
+    if (!staff.length) {
+      var admin = {
+        id: uid('u'), role: 'teacher', name: 'School office', cn: '\u6559\u52a1\u5904',
+        email: 'admin@erachinese.mn', color: '#5227E0', title: 'Administrator'
+      };
+      global.Auth.setPassword(admin, START_PASSWORD);
+      d.users.push(admin);
+      staff = [admin];
+    }
+    (d.classes || []).forEach(function (c) {
+      if (!d.users.filter(function (u) { return u.id === c.teacherId; })[0]) c.teacherId = staff[0].id;
+    });
+    return d;
+  }
 
   /* A school saved before tuition existed keeps its classes, lessons and marks —
      it only gains a fee per class and the invoices that follow from it. */
@@ -312,6 +369,10 @@
     d.users.forEach(function (u) {
       if (!u.pass) global.Auth.setPassword(u, START_PASSWORD);
     });
+    /* a school saved before rooms were a list keeps whatever its classes
+       already use; rooms() reads those anyway, so this only needs to exist */
+    if (!d.rooms) d.rooms = [];
+    dropDemoUsers(d);
     return d;
   }
 
@@ -382,6 +443,64 @@
     teachers: function () { return this.data.users.filter(function (u) { return u.role === 'teacher'; }); },
     /* email is the sign-in name, so it is matched case-insensitively and must
        be unique across the whole school, students and staff alike */
+    /* ── rooms ──
+       The school's teaching rooms. Kept as a list so a class picks one rather
+       than having it typed again each time, which is what let "Room 201",
+       "room 201" and "201" all mean the same room. Any room a class already
+       uses counts as one, so nothing typed before this existed is lost. */
+    rooms: function () {
+      var seen = {}, out = [];
+      (this.data.rooms || []).concat(
+        (this.data.classes || []).map(function (c) { return c.room; })
+      ).forEach(function (r) {
+        r = String(r || '').trim();
+        var key = r.toLowerCase();
+        if (!r || seen[key]) return;
+        seen[key] = 1; out.push(r);
+      });
+      return out.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); });
+    },
+
+    addRoom: function (name) {
+      name = String(name || '').trim();
+      if (!name) return null;
+      var exists = this.rooms().filter(function (r) {
+        return r.toLowerCase() === name.toLowerCase();
+      })[0];
+      if (exists) return exists;
+      this.data.rooms = this.data.rooms || [];
+      this.data.rooms.push(name);
+      this.save();
+      return name;
+    },
+
+    removeRoom: function (name) {
+      var key = String(name || '').trim().toLowerCase();
+      this.data.rooms = (this.data.rooms || []).filter(function (r) {
+        return String(r).toLowerCase() !== key;
+      });
+      this.save();
+    },
+
+    /* Which classes are already in that room at that time. Days are stored as
+       "Mon · Wed · Fri", so two classes clash when they share a room, share a
+       weekday and start at the same time. Booking the same room twice is a
+       real mistake, but it is the teacher's call — this reports, it does not
+       refuse. */
+    roomClashes: function (room, days, time, exceptId) {
+      room = String(room || '').trim().toLowerCase();
+      if (!room || !time) return [];
+      var mine = String(days || '').split('·').map(function (d) { return d.trim(); }).filter(Boolean);
+      if (!mine.length) return [];
+      return (this.data.classes || []).filter(function (c) {
+        if (c.id === exceptId) return false;
+        if (String(c.room || '').trim().toLowerCase() !== room) return false;
+        if (String(c.time || '') !== String(time)) return false;
+        var theirs = String(c.days || '').split('·').map(function (d) { return d.trim(); });
+        return mine.some(function (d) { return theirs.indexOf(d) > -1; });
+      });
+    },
+
     userByEmail: function (email) {
       var e = String(email || '').trim().toLowerCase();
       if (!e) return null;

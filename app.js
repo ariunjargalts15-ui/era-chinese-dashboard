@@ -363,6 +363,18 @@
       return;
     }
 
+    /* The account can go while the tab is still open: another tab starts the
+       school over, or the demo accounts are cleared out on an upgrade. Sign
+       out cleanly rather than drawing a shell around nobody. */
+    if (!S.user(App.session.userId)) {
+      if (lastLive) { global.LiveView.unmount(); lastLive = null; }
+      App.session = null; App.filters = {}; App.flash = null;
+      saveSession();
+      location.hash = '';
+      root.innerHTML = publicPage();
+      return;
+    }
+
     var pfx = PREFIX[App.session.role];
     if (App.route[0] !== pfx) { location.hash = homeHash(); return; }
 

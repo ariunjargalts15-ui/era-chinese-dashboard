@@ -210,6 +210,12 @@
     'Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.':
       'Бүх сурагч, ирц, дүн, нэхэмжлэх, мэдээ устаж, сургууль анхны байдалдаа буцна.',
     'The school was reset': 'Сургуулийг шинээр эхлүүллээ',
+    'No room set': 'Танхим сонгоогүй',
+    'or a new room': 'эсвэл шинэ танхим',
+    'e.g. Room 204': 'жишээ нь: 204 тоот',
+    '{room} is already booked for {klass} at that time':
+      '{room} тэр цагт {klass}-д аль хэдийн захиалагдсан байна',
+    'Rooms': 'Танхимууд',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -550,6 +556,12 @@
     'Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.':
       '所有学生、考勤、成绩、账单和公告都会被清除，学校恢复到初始状态。',
     'The school was reset': '学校已重置',
+    'No room set': '未选择教室',
+    'or a new room': '或新建教室',
+    'e.g. Room 204': '例如：204 教室',
+    '{room} is already booked for {klass} at that time':
+      '{room} 在该时段已被 {klass} 占用',
+    'Rooms': '教室',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',

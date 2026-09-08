@@ -212,6 +212,18 @@ file with its status — *paid · overdue · part paid · waiting*. It is strict
 strictly their own: payments are recorded by the teacher in *Payments*, and this page is the
 same data read from the other side.
 
+## Rooms
+
+The school's teaching rooms are a list, not something retyped on every class —
+which is what let *Room 201*, *room 201* and *201* all mean the same room. The
+class form picks from that list, with a box underneath for one that is not on it
+yet; whatever is typed there wins and joins the list for next time. A room a
+class already used counts as one, so nothing typed before this existed is lost.
+
+Saving a class into a room that already has one at that time — same room, same
+start time, a shared weekday — says so and names the other class. It warns and
+saves; double-booking is the school's call, not the app's.
+
 ## Graduating a student
 
 Finishing a course is not the same as leaving one, so it is not the same as *Remove from the
@@ -306,6 +318,15 @@ and it deletes every account opened since the seed, so it warns before it runs.
 - **three empty classes** — HSK 1, HSK 3, Business Chinese, with their fees and
   timetables, and their lessons. Rosters are empty.
 - **an empty noticeboard**, no students, no registers, no grades, no invoices.
+
+**Upgrading an existing deploy clears the demo out too.** The old seed shipped
+two teachers and eight students, and a school already saved in a browser kept
+them — including `sarangerel@erachinese.mn`, whose password used to be printed
+here. `migrate()` now removes those ten accounts by their exact seeded email,
+along with their registers, grades and invoices, and re-points any class whose
+teacher went. Accounts you created yourself are never touched, and if the purge
+would leave no staff at all it puts the *School office* account back so the
+school is not locked.
 
 First thing to do on a fresh deploy: sign in as that account, change its
 password, add the real teachers under *Students → Add a teacher*, and put the
