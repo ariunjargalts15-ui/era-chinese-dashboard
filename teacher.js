@@ -455,6 +455,7 @@
               k[1] + ' <span class="num">' + k[2] + '</span></button>';
           }).join('') +
         '</div><span class="sp"></span>' +
+        '<button class="btn" data-act="newTeacher">' + U.icon('users') + T('Add a teacher') + '</button>' +
         '<button class="btn btn--pri" data-act="newStudent">' + U.icon('plus') + T('New student') + '</button>' +
       '</div>' +
       '<div class="card"><div class="card__h"><h3>' + T('My students') + '</h3>' +
@@ -846,6 +847,9 @@
     });
   };
 
+  /* Most students open their own account on the public site. This is the other
+     way in, for someone enrolled at the desk — so it has to set a password too,
+     or the account it makes could never be signed into. */
   A.newStudent = function () {
     var t = me();
     U.Modal.open({
@@ -854,16 +858,53 @@
               '<label class="field"><span>' + T('Name') + '</span><input name="name" placeholder="' + T('Full name') + '"></label>' +
               '<label class="field"><span>' + T('Chinese name') + '</span><input name="cn" placeholder="中文名"></label></div>' +
             '<label class="field"><span>' + T('Email') + '</span><input name="email" placeholder="name@student.mn"></label>' +
+            '<label class="field"><span>' + T('Password') + '</span>' +
+              '<input name="password" type="text" autocomplete="off"></label>' +
+            '<p class="tiny muted" style="margin:-4px 0 2px">' +
+              T('At least 8 characters, with letters and numbers.') + ' ' +
+              T('They sign in with this email and password. Ask them to change it.') + '</p>' +
             '<label class="field"><span>' + T('Enrol in class') + '</span><select name="classId">' +
               '<option value="">' + T('None for now') + '</option>' + classOptions('', t.id) + '</select></label>',
       okText: T('Create student'),
       onOk: function () {
-        var nm = U.Modal.val('name');
-        if (!nm) { U.toast(T('The student needs a name'), 'alert'); return; }
-        var u = S.addStudent({ name: nm, cn: U.Modal.val('cn'), email: U.Modal.val('email') });
+        var pw = U.Modal.val('password');
+        var r = S.registerStudent({
+          name: U.Modal.val('name'), cn: U.Modal.val('cn'), email: U.Modal.val('email'),
+          password: pw, confirm: pw
+        });
+        if (r.error) { U.toast(T(r.error), 'alert'); return; }
         var cid = U.Modal.val('classId');
-        if (cid) S.enroll(cid, u.id);
+        if (cid) S.enroll(cid, r.user.id);
         U.Modal.close(); App.render(); U.toast(T('Student created'));
+      }
+    });
+  };
+
+  /* Staff accounts exist only behind this button. A teacher account reads every
+     register, grade and invoice in the school, so it is never something a
+     stranger can hand themselves on the public site. */
+  A.newTeacher = function () {
+    U.Modal.open({
+      title: T('Add a teacher'), cn: '添加教师',
+      body: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+              '<label class="field"><span>' + T('Name') + '</span><input name="name" placeholder="' + T('Full name') + '"></label>' +
+              '<label class="field"><span>' + T('Chinese name') + '</span><input name="cn" placeholder="中文名"></label></div>' +
+            '<label class="field"><span>' + T('Email') + '</span><input name="email" placeholder="name@erachinese.mn"></label>' +
+            '<label class="field"><span>' + T('Job title') + '</span>' +
+              '<input name="title" placeholder="' + T('Instructor') + '"></label>' +
+            '<label class="field"><span>' + T('Password') + '</span>' +
+              '<input name="password" type="text" autocomplete="off"></label>' +
+            '<p class="tiny muted" style="margin:0">' +
+              T('At least 8 characters, with letters and numbers.') + ' ' +
+              T('They sign in with this email and password. Ask them to change it.') + '</p>',
+      okText: T('Add a teacher'),
+      onOk: function () {
+        var r = S.addTeacher({
+          name: U.Modal.val('name'), cn: U.Modal.val('cn'), email: U.Modal.val('email'),
+          title: U.Modal.val('title'), password: U.Modal.val('password')
+        });
+        if (r.error) { U.toast(T(r.error), 'alert'); return; }
+        U.Modal.close(); App.render(); U.toast(T('Teacher account created'), 'users');
       }
     });
   };

@@ -14,11 +14,14 @@ Open `index.html` directly, or serve the folder:
 python -m http.server 4180 -d era-chinese-lite
 ```
 
-Then go to <http://localhost:4180>. On the sign-in screen pick any teacher or
-student account — there are no passwords, this is a demo school.
+Then go to <http://localhost:4180>. You land on the public site — the
+noticeboard, the courses and the contact details. **Sign in** with
+`sarangerel@erachinese.mn` / `era2026pw` for the teacher's side, or **create an
+account** to come in as a new student.
 
 **To try a live lesson with both roles at once**, open the app in **two browser
-tabs**: sign in as the teacher in one and as a student in the other. Each tab keeps
+tabs**: sign in as `sarangerel@erachinese.mn` in one and `anujin@student.mn` in
+the other (both `era2026pw`). Each tab keeps
 its own account (the session lives in `sessionStorage`) while both read and write the
 same school.
 
@@ -41,7 +44,7 @@ data, so they never change.
 | Lesson detail | Attendance register, lesson plan, vocabulary editor, handed-in work, **Complete lesson**, and **Start the online lesson** |
 | Online classroom | See below |
 | Homework | Every submission across all classes; grade 0–100 with written feedback |
-| Students | Roster with attendance, homework average and skill score; create a student; open a card for the skill radar and to record a new assessment |
+| Students | Roster with attendance, homework average and skill score; **create a student** (with the password they will sign in with) and **add a teacher** — the only place staff accounts are made; open a card for the skill radar and to record a new assessment |
 | Payments 学费 | Tuition control: collected / outstanding / overdue for a month or across all of them, **Bill {month}** to raise the missing invoices in one press, record a payment with its date, amount and method (cash, bank, card, mobile) — part payments stay on the invoice as an **advance** (урьдчилгаа) with the balance still showing — reverse a payment, add a one-off invoice, and set the monthly fee per class |
 | News 公告 | The school noticeboard — write a notice, publish it or keep it a draft, pin it to the top, edit or delete it. Published notices are what visitors read on the sign-in page and what students see on their dashboard |
 
@@ -122,22 +125,80 @@ scheduled ──▶ in_progress ──▶ completed
 **Complete lesson** asks for what was covered, the homework and private notes, then
 records any student still unmarked as **absent** and closes the register.
 
+## The public site
+
+Everything before an account exists lives at `#/p/...`, wrapped in a header and a
+footer so the school reads as a site rather than a login prompt:
+
+| Page | What a visitor gets |
+| --- | --- |
+| **News** `#/p/news` | The noticeboard — the landing page. Published notices only; drafts never leave the teacher's screen |
+| **Courses** `#/p/classes` | Every class actually running, with level, timetable, teacher, how many are studying, and the monthly fee |
+| **Contact** `#/p/contact` | Phone, email, address |
+| **Sign in** `#/p/login` | Email and password |
+| **Create an account** `#/p/join` | Opens a **student** account |
+
+The footer repeats the sales and support numbers, both email addresses, the
+address, and links to Facebook and Instagram. All of it comes from
+`data.school` in [store.js](store.js) — phone numbers, address and social links
+are the only invented values in the project, so change them there and they
+change everywhere.
+
+## Accounts
+
+Two doors, deliberately different:
+
+- **Students open their own account.** Name, email, password, confirmation.
+  Registration can only ever produce a student.
+- **Staff cannot self-register.** A teacher account reads every register, grade
+  and invoice in the school, so those are created from inside: *Students →
+  **Add a teacher***, by someone already signed in as one.
+
+A teacher can also create a student at the desk (*Students → **New student***),
+and that form sets a password too — otherwise the account it made could never be
+signed into. Everyone can change their own password from the sidebar.
+
+Sign-in gives the same message for an unknown email and a wrong password, so a
+stranger cannot use the form to discover who has an account.
+
+### The starting password
+
+Every seeded account starts on **`era2026pw`** — including
+`sarangerel@erachinese.mn` (teacher) and `anujin@student.mn` (student). Change it
+on first sign-in.
+
+### What the passwords are worth
+
+**There is no server.** The school lives in this browser's localStorage, so a
+password can only be checked on the client, and anyone with the developer tools
+open can read the store. [auth.js](auth.js) does not pretend otherwise. What it
+does do is refuse to keep passwords in plain text: every account carries a random
+16-byte salt, and what is stored is SHA-256 iterated 600 times over salt+password.
+So the saved school never contains a readable password, and one leaked hash does
+not unlock a reused one.
+
+That is the honest limit of client-side auth — it keeps passwords out of the
+stored data and keeps students out of each other's records, but it is not a
+substitute for server-side authentication. Putting real tuition records in front
+of the public needs a backend, and this is the piece to replace first.
+
+The SHA-256 implementation is checked byte-for-byte against Node's
+`crypto.createHash('sha256')`, including multi-byte UTF-8 and surrogate pairs.
+
 ## The noticeboard
 
-The sign-in page has two tabs: **Sign in** and **News**. The second is the school's
-noticeboard, and it is the one thing in the app a visitor can read **before they have an
-account** — opening hours, intake dates, exam dates, a closure.
+The teacher writes it from **News 公告**. Each notice is a headline, an optional
+Chinese headline, a date and a body, and carries two switches:
 
-The teacher writes it from **News 公告**. Each notice is a headline, an optional Chinese
-headline, a date and a body, and carries two switches:
+- **Published** — a draft is written but not out. Publishing is what puts it on
+  the public site and on every student's dashboard; unpublishing takes it
+  straight back down.
+- **Pinned** — pinned notices lead the board however old they are, and the pinned
+  one is the notice that shows on student dashboards.
 
-- **Published** — a draft is written but not out. Publishing is what puts it on the sign-in
-  page and on every student's dashboard; unpublishing takes it straight back down.
-- **Pinned** — pinned notices lead the board however old they are, and the pinned one is the
-  notice that shows on student dashboards.
-
-Students get the same board under **News**, with the pinned notice repeated as a strip on
-their dashboard so school-wide news reaches the people already signed in, not only visitors.
+Students get the same board under **News**, with the pinned notice repeated as a
+strip on their dashboard so school-wide news reaches the people already signed
+in, not only visitors.
 
 ## My tuition
 
@@ -199,16 +260,16 @@ received.
 
 ```
 era-chinese-lite/
-├── index.html    loads the six scripts and the stylesheet
+├── index.html    loads the eight scripts and the stylesheet
 ├── app.css       design system — brand violet, gold 金, ink 墨, rice paper 宣纸
 ├── i18n.js       English / Монгол / 中文 dictionaries, calendars and T()
+├── auth.js       salted SHA-256 passwords and what they are worth without a server
 ├── store.js      data model, seed school, lookups, localStorage persistence
 ├── ui.js         icons, formatting, avatars, tags, modal, toast, charts, speech
 ├── live.js       shared room state + the online classroom and its tools
 ├── teacher.js    teacher pages and actions
 ├── student.js    student pages and actions
-├── app.js        session, hash router, shell, sign-in, event delegation
-└── brand-loop.mp4  the calligraphy clip behind the sign-in panel (8 s, muted, 0.6 MB)
+└── app.js        session, hash router, the public site, the shell, event delegation
 ```
 
 ## The logo
@@ -221,14 +282,11 @@ action colour — buttons, active nav links, focus rings, chips, the reset link.
 `#C8443C` stays as `--red`, but only where red means something: live lessons, absences,
 overdue tuition, wrong quiz answers. The favicon is the wordmark on a violet tile.
 
-The sign-in screen loops `brand-loop.mp4` behind the brand panel under a dark scrim, so the
-headline and the "Сонирхогч бус Мэргэжлийн" line stay readable over any frame. Swap the file
-to change it — keep it muted and short and it autoplays on its own.
-
 State lives in three keys: `era-chinese-lite/v1` (the school),
 `era-chinese-lite/live` (open classrooms) and `era-chinese-lite/lang`, plus
 `era-chinese-lite/session` in **sessionStorage**, which is what lets two tabs hold two
-different accounts. **Reset demo** in the top bar puts everything back.
+different accounts. **Reset demo** in the top bar puts everything back — it is teachers-only,
+and it deletes every account opened since the seed, so it warns before it runs.
 
 ## The seeded school
 

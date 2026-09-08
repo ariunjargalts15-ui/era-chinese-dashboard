@@ -41,25 +41,9 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
 ::-webkit-scrollbar-thumb { background:#DDD4C8; border-radius:8px; border:3px solid var(--paper); }
 ::-webkit-scrollbar-thumb:hover { background:#C9BEAF; }
 
-/* ══ LOGIN ══════════════════════════════════════════════ */
-.login { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
-.login__brand {
-  background:#241D1A;
-  color:#F6EFE4; padding:48px 52px; display:flex; flex-direction:column;
-  justify-content:space-between; position:relative; overflow:hidden;
-}
-/* the calligraphy loop sits behind everything, with a scrim so the copy reads */
-.login__video {
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-  pointer-events:none;
-}
-.login__brand::after {
-  content:""; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(180deg,
-    rgba(36,29,26,.42) 0%, rgba(36,29,26,.60) 42%, rgba(36,29,26,.94) 100%);
-}
-.login__logo { display:flex; align-items:center; position:relative; z-index:1; }
-
+/* ══ WORDMARK & TABS ════════════════════════ */
+/* The sign-in screen these once dressed is now the public site at the
+   bottom of this file; the wordmark and the tab strip outlived it. */
 /* ── the logo ── a heavy wordmark with the line hanging off its right edge,
    flush with the full stop. The negative margins cancel the trailing
    letter-space of the last glyph so both edges line up. */
@@ -69,54 +53,15 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
   display:block; margin-top:4px; font:500 15px/1.4 var(--serif);
   color:#E9B949; letter-spacing:.08em; margin-right:-.08em;
 }
-.login__logo .logo b, .nav__top .logo b { color:#FFFFFF; }
+.nav__top .logo b { color:#FFFFFF; }
 .logo--lg b { font-size:52px; }
 .logo--lg span { font-size:19px; margin-top:8px; letter-spacing:.12em; margin-right:-.12em; }
-.login__foot { position:relative; z-index:1; display:flex; flex-direction:column; gap:18px; }
-.login__pitch { max-width:26rem; }
-.login__pitch h1 { font-size:36px; line-height:1.18; text-shadow:0 2px 18px rgba(0,0,0,.45); }
-.login__slogan {
-  margin:0; font-style:italic; font-size:21px; font-weight:500; color:var(--gold-lt);
-  letter-spacing:.01em; text-shadow:0 2px 14px rgba(0,0,0,.5);
-}
-.login__facts { display:flex; gap:34px; padding-top:4px; }
-.login__facts div b { display:block; font:700 24px/1 var(--sans); color:var(--gold-lt); }
-.login__facts div span { font-size:12px; color:#CDBCA8; }
-
-.login__pick { padding:56px 52px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto; position:relative; }
-/* plain wordmark on the sign-in side */
-.login__mark {
-  position:absolute; top:26px; right:52px;
-  font:900 17px/1 var(--sans); letter-spacing:-.03em; margin-right:-.03em; color:var(--brand);
-}
-.login__pick > p { color:var(--ink-3); margin:6px 0 26px; }
 .roleTabs { display:flex; gap:8px; background:var(--line-2); padding:5px; border-radius:11px; margin-bottom:20px; }
 .roleTabs button {
   flex:1; border:0; background:transparent; padding:9px; border-radius:8px;
   font-weight:600; color:var(--ink-3); cursor:pointer; transition:.15s;
 }
 .roleTabs button.on { background:var(--card); color:var(--ink); box-shadow:var(--sh); }
-.accounts { display:flex; flex-direction:column; gap:8px; max-height:46vh; overflow:auto; padding-right:4px; }
-
-/* ── the public noticeboard on the sign-in side ── */
-.notices { display:flex; flex-direction:column; gap:10px; max-height:58vh; overflow:auto; padding-right:4px; }
-.notice {
-  padding:14px 16px; background:var(--card); border:1px solid var(--line);
-  border-radius:var(--r); border-left:3px solid var(--line);
-}
-.notice--pin { border-left-color:var(--gold); background:var(--card-2); }
-.notice__h { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
-.notice b { display:block; font-size:15px; line-height:1.3; }
-.notice p { margin:7px 0 0; color:var(--ink-3); font-size:13px; line-height:1.55; white-space:pre-wrap; }
-.notice .tiny.muted:last-child { margin-top:8px; }
-.acct {
-  display:flex; align-items:center; gap:13px; padding:11px 14px; cursor:pointer;
-  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
-  text-align:left; transition:.15s;
-}
-.acct:hover { border-color:var(--brand); box-shadow:var(--sh); transform:translateX(2px); }
-.acct b { display:block; font-weight:600; }
-.acct small { color:var(--ink-3); }
 
 /* ══ SHELL ══════════════════════════════════════════════ */
 .shell { display:flex; min-height:100vh; }
@@ -490,12 +435,6 @@ tbody tr:hover { background:var(--card-2); }
 /* ── responsive ─────────────────────────────────────────── */
 @media (max-width:1080px) { .g4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:900px) {
-  .login { grid-template-columns:1fr; }
-  .login__brand { padding:34px 26px; }
-  .login__brand::after { font-size:260px; right:-50px; bottom:-80px; }
-  .login__pitch h1 { font-size:27px; }
-  .login__pick { padding:34px 26px; }
-  .login__mark { top:16px; right:26px; }
   .g2,.g3,.g-2-1,.g-1-2,.liveGrid { grid-template-columns:minmax(0,1fr); }
   .boardCard__hz { font-size:60px; }
   .boardText { font-size:26px; }
@@ -524,4 +463,143 @@ tbody tr:hover { background:var(--card-2); }
   .marks button { flex:1 1 auto; padding:8px 6px; }
   .modal__f { flex-direction:column-reverse; }
   .modal__f .btn { justify-content:center; }
+}
+
+/* ══ the public site ═══════════════════════════════════════════════
+   Header, page, footer — what a visitor sees before they sign in. */
+.site { min-height:100vh; display:flex; flex-direction:column; background:var(--paper); }
+
+/* ── header: logo left, nav centre, actions right ── */
+.site__head {
+  position:sticky; top:0; z-index:40;
+  background:var(--card); border-bottom:1px solid var(--line);
+}
+.site__bar {
+  max-width:1180px; margin:0 auto; padding:0 24px;
+  height:72px; display:flex; align-items:center; gap:26px;
+}
+.site__logo { display:flex; flex-direction:column; text-decoration:none; line-height:1.1; }
+.site__logo b { font-size:19px; letter-spacing:.02em; color:var(--ink); }
+.site__logo span { font-size:10.5px; color:var(--gold); letter-spacing:.14em; margin-top:2px; }
+
+.site__nav { display:flex; gap:28px; margin-left:14px; flex:1; }
+.site__nav a {
+  text-decoration:none; color:var(--ink-2); font-weight:600; font-size:13px;
+  letter-spacing:.06em; text-transform:uppercase; padding:6px 0;
+  border-bottom:2px solid transparent; transition:.15s; white-space:nowrap;
+}
+.site__nav a:hover { color:var(--ink); }
+.site__nav a.on { color:var(--brand); border-bottom-color:var(--brand); }
+
+.site__acts { display:flex; align-items:center; gap:10px; }
+.btn--cta {
+  background:var(--gold-lt); color:#1A1614; border-color:var(--gold-lt);
+  font-weight:700;
+}
+.btn--cta:hover { background:var(--gold); border-color:var(--gold); color:#fff; }
+.site__burger { display:none; background:none; border:0; color:var(--ink); cursor:pointer; padding:6px; }
+
+/* ── page body ── */
+.site__main { flex:1; width:100%; max-width:1180px; margin:0 auto; padding:38px 24px 64px; }
+.site__main--narrow { max-width:470px; padding-top:56px; }
+
+.site__hero { margin-bottom:26px; }
+.site__hero h1 { font-size:31px; letter-spacing:-.02em; margin:0; }
+.site__hero p { color:var(--ink-3); margin:8px 0 0; font-size:15px; max-width:60ch; }
+
+.site__cta {
+  margin-top:26px; padding:22px 24px; border-radius:var(--r-lg);
+  background:var(--card-2); border:1px solid var(--line);
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.site__cta b { flex:1; font-size:16px; }
+
+/* ── notices ── */
+.notices { display:flex; flex-direction:column; gap:12px; }
+.notice {
+  padding:20px 22px; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r); border-left:3px solid var(--line);
+}
+.notice--pin { border-left-color:var(--gold); background:var(--card-2); }
+.notice__h { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.notice b { display:block; font-size:17px; line-height:1.35; }
+.notice p { margin:9px 0 0; color:var(--ink-2); font-size:14px; line-height:1.65; white-space:pre-wrap; }
+.notice .tiny.muted:last-child { margin-top:10px; }
+
+/* ── courses ── */
+.course__meta { margin-top:14px; display:flex; flex-direction:column; gap:7px; }
+.course__meta div { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-3); }
+.course__meta svg { flex:none; color:var(--ink-4); }
+.course__fee {
+  margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+  display:flex; align-items:baseline; gap:2px;
+}
+.course__fee b { font-size:19px; color:var(--brand); }
+
+/* ── sign in / create an account ── */
+.auth {
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:34px 32px 28px;
+}
+.auth h1 { font-size:25px; margin:0; letter-spacing:-.01em; }
+.auth__sub { color:var(--ink-3); font-size:13.5px; margin:9px 0 22px; line-height:1.6; }
+.auth__form { display:flex; flex-direction:column; gap:15px; }
+.auth__err {
+  display:flex; align-items:center; gap:9px; margin-bottom:18px;
+  padding:11px 14px; border-radius:var(--r-sm); font-size:13px; font-weight:600;
+  background:#FDF0EF; border:1px solid #F0C9C6; color:#A3302A;
+}
+.auth__err svg { flex:none; }
+.field--ic > span:first-child { display:block; }
+.field__wrap { position:relative; display:block; }
+.field__wrap svg { position:absolute; left:12px; top:50%; margin-top:-8px; color:var(--ink-4); pointer-events:none; }
+.field__wrap input { padding-left:36px !important; width:100%; }
+.btn--wide { width:100%; justify-content:center; padding:12px; font-size:14px; margin-top:4px; }
+.auth__foot {
+  margin-top:20px; padding-top:18px; border-top:1px solid var(--line);
+  font-size:13px; color:var(--ink-3); text-align:center;
+}
+.auth__foot a { color:var(--brand); font-weight:600; text-decoration:none; }
+.auth__foot a:hover { text-decoration:underline; }
+
+/* ── footer ── */
+.site__foot { background:var(--card); border-top:1px solid var(--line); margin-top:auto; }
+.foot__in { max-width:1180px; margin:0 auto; padding:38px 24px 26px; }
+.foot__contact { display:flex; flex-direction:column; gap:11px; align-items:flex-start; }
+.foot__row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; font-size:13.5px; }
+.foot__lbl {
+  min-width:190px; font-weight:700; color:var(--ink-2);
+  text-transform:uppercase; letter-spacing:.06em; font-size:12px;
+}
+.foot__val { display:inline-flex; align-items:center; gap:7px; color:var(--ink-2); font-weight:600; }
+.foot__val svg { color:var(--ink-4); flex:none; }
+.foot__mail { color:var(--brand); text-decoration:none; font-weight:600; }
+.foot__mail:hover { text-decoration:underline; }
+
+.foot__social { display:flex; gap:11px; margin-top:12px; }
+.foot__social a {
+  width:40px; height:40px; border-radius:50%;
+  border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+  color:var(--ink-3); transition:.15s;
+}
+.foot__social a:hover { background:var(--brand); border-color:var(--brand); color:#fff; }
+
+.foot__legal {
+  border-top:1px solid var(--line); padding:15px 24px;
+  text-align:center; font-size:12px; color:var(--ink-4);
+}
+
+@media (max-width: 860px) {
+  .site__bar { gap:14px; padding:0 16px; }
+  .site__burger { display:block; order:3; margin-left:auto; }
+  .site__nav, .site__acts {
+    display:none; position:absolute; top:72px; left:0; right:0;
+    background:var(--card); border-bottom:1px solid var(--line);
+    flex-direction:column; padding:16px; gap:14px; align-items:stretch;
+  }
+  body.nav-open .site__nav, body.nav-open .site__acts { display:flex; }
+  body.nav-open .site__acts { top:auto; position:static; border:0; padding-top:0; }
+  .site__main { padding:26px 16px 48px; }
+  .foot__lbl { min-width:0; }
+  .foot__row { gap:8px; }
 }

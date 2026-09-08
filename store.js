@@ -86,6 +86,8 @@
 
   /* ── tuition ───────────────────────────────── */
   var DEFAULT_FEE = 200000;
+  /* what every seeded account starts with; see the README */
+  var START_PASSWORD = 'era2026pw';
   var METHODS = ['Cash', 'Bank transfer', 'Card', 'Mobile'];
   var BILL_DAY = 5;                                 /* tuition falls due on the 5th */
 
@@ -254,7 +256,16 @@
 
     return {
       version: 3,
-      school: { name: 'ERA CHINESE', cn: '时代汉语' },
+      school: {
+        name: 'ERA CHINESE', cn: '时代汉语',
+        /* Shown in the public header and footer. Replace these with the
+           school's real details — they are the only invented values here. */
+        phone: '7710-1251 (1)', phone2: '7710-1251 (2)',
+        email: 'sales@erachinese.mn', support: 'support@erachinese.mn',
+        address: 'Sukhbaatar District, 1st khoroo, Ulaanbaatar',
+        facebook: 'https://facebook.com/erachinese',
+        instagram: 'https://instagram.com/erachinese'
+      },
       users: users,
       classes: classes,
       decks: DECKS,
@@ -305,6 +316,12 @@
     /* a school saved before the noticeboard existed gets the seeded one, so the
        feature is not an empty page on first sight */
     if (!d.news) d.news = seedNews();
+    /* Accounts saved before sign-in existed have no password. Rather than lock
+       the school's own staff out of it, each gets the starting password, which
+       the README names and everyone should change. */
+    d.users.forEach(function (u) {
+      if (!u.pass) global.Auth.setPassword(u, START_PASSWORD);
+    });
     return d;
   }
 
@@ -326,7 +343,7 @@
           }
         } catch (e) { /* corrupt — reseed */ }
       }
-      this.data = seed();
+      this.data = migrate(seed());
       this.save();
       return this.data;
     },
@@ -363,7 +380,7 @@
     },
 
     reset: function () {
-      this.data = seed();
+      this.data = migrate(seed());
       this.save();
       return this.data;
     },
@@ -373,6 +390,15 @@
     klass: function (id) { return this.data.classes.filter(function (c) { return c.id === id; })[0] || null; },
     lesson: function (id) { return this.data.lessons.filter(function (l) { return l.id === id; })[0] || null; },
     teachers: function () { return this.data.users.filter(function (u) { return u.role === 'teacher'; }); },
+    /* email is the sign-in name, so it is matched case-insensitively and must
+       be unique across the whole school, students and staff alike */
+    userByEmail: function (email) {
+      var e = String(email || '').trim().toLowerCase();
+      if (!e) return null;
+      return this.data.users.filter(function (u) {
+        return String(u.email || '').toLowerCase() === e;
+      })[0] || null;
+    },
     students: function () { return this.data.users.filter(function (u) { return u.role === 'student'; }); },
 
     /* ── who is still studying ──
@@ -527,6 +553,73 @@
       this.data.users.push(u);
       this.save();
       return u;
+    },
+
+    /* ── accounts ──
+       Two doors, deliberately different. A student opens their own account:
+       they are the public, and making them wait on staff to be let in is how a
+       school loses them. Staff cannot self-register at all — a teacher account
+       reads every register, grade and invoice in the school, so it is only ever
+       created from inside by someone already holding one.
+
+       Passwords never touch this file in the clear; Auth salts and hashes them.
+       See auth.js for what that is and is not worth without a server. */
+    registerStudent: function (data) {
+      var A = global.Auth;
+      var name = String(data.name || '').trim();
+      var email = String(data.email || '').trim();
+      if (!name) return { error: 'Enter your name' };
+      var bad = A.checkEmail(email) || A.checkPassword(data.password);
+      if (bad) return { error: bad };
+      if (data.password !== data.confirm) return { error: 'The two passwords do not match' };
+      if (this.userByEmail(email)) return { error: 'An account with that email already exists' };
+
+      var u = this.addStudent({ name: name, cn: data.cn || '', email: email });
+      u.email = email;
+      u.joinedAt = today();
+      A.setPassword(u, data.password);
+      this.save();
+      return { user: u };
+    },
+
+    /* staff, created from inside by a teacher who is already signed in */
+    addTeacher: function (data) {
+      var A = global.Auth;
+      var colors = ['#C8443C', '#2C7A62', '#A8862A', '#4A5A6A', '#8A4FA0'];
+      var name = String(data.name || '').trim();
+      var email = String(data.email || '').trim();
+      if (!name) return { error: 'Enter your name' };
+      var bad = A.checkEmail(email) || A.checkPassword(data.password);
+      if (bad) return { error: bad };
+      if (this.userByEmail(email)) return { error: 'An account with that email already exists' };
+
+      var u = {
+        id: uid('u'), role: 'teacher', name: name, cn: data.cn || '', email: email,
+        title: data.title || '', color: colors[this.data.users.length % colors.length],
+        joinedAt: today()
+      };
+      A.setPassword(u, data.password);
+      this.data.users.push(u);
+      this.save();
+      return { user: u };
+    },
+
+    /* One message for "no such email" and "wrong password" alike — telling a
+       stranger which of the two they got right tells them who has an account. */
+    signIn: function (email, password) {
+      var u = this.userByEmail(email);
+      if (!u || !global.Auth.verify(u, password)) return { error: 'Wrong email or password' };
+      return { user: u };
+    },
+
+    setPassword: function (id, password) {
+      var u = this.user(id);
+      if (!u) return { error: 'Wrong email or password' };
+      var bad = global.Auth.checkPassword(password);
+      if (bad) return { error: bad };
+      global.Auth.setPassword(u, password);
+      this.save();
+      return { user: u };
     },
     /* Finishing is not leaving: the roster entry, the registers, the marks and
        any unsettled invoice all stay exactly where they are. Only new billing

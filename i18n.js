@@ -159,6 +159,50 @@
     'Edit': 'Засах', 'Homework avg': 'Даалгаврын дундаж', 'Skills': 'Чадвар', 'Open': 'Нээх',
     'My students': 'Миний сурагчид',
 
+    /* the public site */
+    'Courses': 'Хичээлүүд', 'Contact': 'Холбоо барих',
+    'Create an account': 'Бүртгүүлэх', 'Create a student account': 'Сурагчийн бүртгэл үүсгэх',
+    'Notices, intake dates and closures \u2014 straight from the school.':
+      'Зар, элсэлтийн хугацаа, амралт \u2014 сургуулиас шууд.',
+    'Every group running right now, with its level, timetable and monthly fee.':
+      'Одоо явагдаж буй бүх бүлэг \u2014 түвшин, хуваарь, сарын төлбөрийн хамт.',
+    'Come in, call, or write \u2014 whichever suits you.':
+      'Биечлэн ирэх, залгах, эсвэл бичих \u2014 танд тохирсоноор.',
+    '{n} studying': '{n} суралцаж байна', 'month': 'сар',
+    'Want to join one of these?': 'Эдгээрийн аль нэгэнд элсэх үү?',
+    'Sales': 'Борлуулалтын алба', 'Support': 'Тусламж үйлчилгээ',
+    'Address': 'Хаяг', 'Email': 'И-мэйл',
+
+    /* signing in and joining */
+    'Password': 'Нууц үг', 'Repeat password': 'Нууц үг давтах', 'Full name': 'Бүтэн нэр',
+    'Staff and students use the same door \u2014 the account decides what opens.':
+      'Ажилтан, сурагч нэг хаалгаар \u2014 юу нээгдэхийг бүртгэл шийднэ.',
+    'This opens a student account. Teacher and staff accounts are created by the school.':
+      'Энэ нь сурагчийн бүртгэл үүсгэнэ. Багш, ажилтны бүртгэлийг сургууль үүсгэдэг.',
+    'At least 8 characters, with letters and numbers.':
+      'Хамгийн багадаа 8 тэмдэгт, үсэг болон тоо хосолсон байх.',
+    'No account yet?': 'Бүртгэлгүй юу?', 'Already have one?': 'Бүртгэлтэй юу?',
+    'Welcome to the school': 'Сургуульдаа тавтай морил',
+
+    /* what can go wrong */
+    'Wrong email or password': 'И-мэйл эсвэл нууц үг буруу байна',
+    'Enter your email': 'И-мэйлээ оруулна уу',
+    'Enter your name': 'Нэрээ оруулна уу',
+    'Enter a password': 'Нууц үгээ оруулна уу',
+    'That does not look like an email address': 'Энэ и-мэйл хаяг мэт харагдахгүй байна',
+    'Use at least 8 characters': 'Хамгийн багадаа 8 тэмдэгт ашиглана уу',
+    'Use both letters and numbers': 'Үсэг болон тоо хоёуланг нь ашиглана уу',
+    'The two passwords do not match': 'Хоёр нууц үг таарахгүй байна',
+    'An account with that email already exists': 'Энэ и-мэйлээр бүртгэл аль хэдийн үүссэн байна',
+
+    /* staff accounts, created from inside */
+    'Add a teacher': 'Багш нэмэх', 'Staff': 'Ажилтан', 'Teachers': 'Багш нар',
+    'Job title': 'Албан тушаал',
+    'Teacher account created': 'Багшийн бүртгэл үүслээ',
+    'They sign in with this email and password. Ask them to change it.':
+      'Тэд энэ и-мэйл, нууц үгээр нэвтэрнэ. Солихыг нь хэлээрэй.',
+    'Every account opened since then is deleted too, and everyone is signed out.':
+      'Түүнээс хойш үүсгэсэн бүх бүртгэл мөн устаж, бүгд системээс гарна.',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -450,6 +494,48 @@
     'Nothing set for this lesson.': '本课没有布置作业。', 'none': '无', 'Edit': '编辑',
     'Homework avg': '作业均分', 'Skills': '技能', 'Open': '打开', 'My students': '我的学生',
 
+    /* the public site */
+    'Courses': '课程', 'Contact': '联系我们',
+    'Create an account': '注册', 'Create a student account': '创建学生账号',
+    'Notices, intake dates and closures \u2014 straight from the school.':
+      '通知、招生日期与放假安排 \u2014 学校第一手消息。',
+    'Every group running right now, with its level, timetable and monthly fee.':
+      '目前开设的所有班级，含级别、课表与月学费。',
+    'Come in, call, or write \u2014 whichever suits you.': '到访、致电或来信 \u2014 都可以。',
+    '{n} studying': '{n} 人在读', 'month': '月',
+    'Want to join one of these?': '想报名其中一个班吗？',
+    'Sales': '销售部', 'Support': '技术支持',
+    'Address': '地址', 'Email': '邮箱',
+
+    /* signing in and joining */
+    'Password': '密码', 'Repeat password': '再次输入密码', 'Full name': '姓名',
+    'Staff and students use the same door \u2014 the account decides what opens.':
+      '教职工与学生从同一入口登录 \u2014 账号决定看到什么。',
+    'This opens a student account. Teacher and staff accounts are created by the school.':
+      '这里创建的是学生账号。教师与教职工账号由学校创建。',
+    'At least 8 characters, with letters and numbers.': '至少 8 个字符，需包含字母和数字。',
+    'No account yet?': '还没有账号？', 'Already have one?': '已有账号？',
+    'Welcome to the school': '欢迎加入',
+
+    /* what can go wrong */
+    'Wrong email or password': '邮箱或密码不正确',
+    'Enter your email': '请输入邮箱',
+    'Enter your name': '请输入姓名',
+    'Enter a password': '请输入密码',
+    'That does not look like an email address': '这看起来不像邮箱地址',
+    'Use at least 8 characters': '请至少使用 8 个字符',
+    'Use both letters and numbers': '请同时使用字母和数字',
+    'The two passwords do not match': '两次输入的密码不一致',
+    'An account with that email already exists': '该邮箱已被注册',
+
+    /* staff accounts, created from inside */
+    'Add a teacher': '添加教师', 'Staff': '教职工', 'Teachers': '教师',
+    'Job title': '职务',
+    'Teacher account created': '教师账号已创建',
+    'They sign in with this email and password. Ask them to change it.':
+      '他们用此邮箱和密码登录，请提醒尽快修改。',
+    'Every account opened since then is deleted too, and everyone is signed out.':
+      '此后创建的所有账号也会被删除，并且所有人都会退出登录。',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',
