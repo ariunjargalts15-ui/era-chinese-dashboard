@@ -233,6 +233,22 @@ showing an empty timetable.
 > rosters. It used to read the rosters, which meant anyone not yet in a class
 > appeared nowhere — and so could never be enrolled either.
 
+### Enrolling raises the invoice
+
+Tuition is billed per student, per class, per month. Enrolling somebody now
+raises that invoice there and then, so a new student shows up in **Payments**
+immediately instead of waiting for someone to remember *Bill {month}*.
+
+Every enrolment goes through one function, `placeStudent()` in
+[store.js](store.js) — the Students page, *New student*, and the class page's
+bulk enrol all call it — so no route can enrol somebody and forget to bill
+them. It never raises a second invoice for the same student, class and month,
+and it never bills a graduate.
+
+Each enrol form carries a **Bill {month} — {fee}** tick, on by default. Untick
+it for someone joining at the end of a month; *Bill {month}* will still pick
+them up later.
+
 ## Rooms
 
 The school's teaching rooms are a list, not something retyped on every class —

@@ -935,19 +935,47 @@
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
               '<label class="field"><span>' + T('Name') + '</span><input name="newName" placeholder="' + T('Full name') + '"></label>' +
               '<label class="field"><span>' + T('Chinese name') + '</span><input name="newCn" placeholder="中文名"></label></div>' +
-            '<label class="field"><span>' + T('Email') + '</span><input name="newEmail" placeholder="name@student.mn"></label>',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+              '<label class="field"><span>' + T('Email') + '</span><input name="newEmail" placeholder="name@student.mn"></label>' +
+              '<label class="field"><span>' + T('Password') + '</span>' +
+                '<input name="newPassword" type="text" autocomplete="off"></label></div>' +
+            '<p class="tiny muted" style="margin:-4px 0 10px">' +
+              T('At least 8 characters, with letters and numbers.') + ' ' +
+              T('They sign in with this email and password. Ask them to change it.') + '</p>' +
+            '<div class="toolSep"></div>' +
+            billOnEnrol(c),
       okText: T('Enrol'),
       onOk: function () {
-        var added = 0;
-        checked('enrol').forEach(function (id) { S.enroll(c.id, id); added++; });
+        var bill = billWanted();
+        var picked = checked('enrol');
         var nm = U.Modal.val('newName');
+        if (!picked.length && !nm) { U.toast(T('Nobody selected'), 'alert'); return; }
+
+        /* the new account first: if it is rejected nothing should have
+           happened yet, so the teacher can fix it and press Enrol again */
+        var fresh = null;
         if (nm) {
-          var u = S.addStudent({ name: nm, cn: U.Modal.val('newCn'), email: U.Modal.val('newEmail') });
-          S.enroll(c.id, u.id);
-          added++;
+          var pw = U.Modal.val('newPassword');
+          var r = S.registerStudent({
+            name: nm, cn: U.Modal.val('newCn'), email: U.Modal.val('newEmail'),
+            password: pw, confirm: pw
+          });
+          if (r.error) { U.toast(T(r.error), 'alert'); return; }
+          fresh = r.user;
         }
-        if (!added) { U.toast(T('Nobody selected'), 'alert'); return; }
-        U.Modal.close(); App.render(); U.toast(T('{n} students enrolled', { n: added }));
+
+        var added = 0, invoiced = 0, total = 0;
+        picked.concat(fresh ? [fresh.id] : []).forEach(function (id) {
+          var res = S.placeStudent(id, c.id, { bill: bill });
+          if (res.error) return;
+          added++;
+          if (res.invoice) { invoiced++; total += res.invoice.amount; }
+        });
+
+        U.Modal.close(); App.render();
+        U.toast(invoiced
+          ? T('{n} students enrolled — {money} invoiced', { n: added, money: U.fmt.money(total) })
+          : T('{n} students enrolled', { n: added }), 'check');
       }
     });
   };
@@ -994,13 +1022,17 @@
         });
         if (r.error) { U.toast(T(r.error), 'alert'); return; }
         var cid = U.Modal.val('classId');
-        if (cid) S.placeStudent(r.user.id, cid);
+        var placed = cid ? S.placeStudent(r.user.id, cid) : null;
         U.Modal.close(); App.render();
-        /* say where they went, since "no class" is the case that used to
-           make a new student vanish */
-        U.toast(cid
-          ? T('{name} joined {klass}', { name: r.user.name, klass: S.klass(cid).name })
-          : T('{name} added — they still need a class', { name: r.user.name }), 'check');
+        /* say where they went and what they owe, since "no class" is the case
+           that used to make a new student vanish */
+        U.toast(!placed
+          ? T('{name} added — they still need a class', { name: r.user.name })
+          : placed.invoice
+            ? T('{name} joined {klass} — {money} invoiced', {
+                name: r.user.name, klass: placed.klass.name,
+                money: U.fmt.money(placed.invoice.amount) })
+            : T('{name} joined {klass}', { name: r.user.name, klass: placed.klass.name }), 'check');
       }
     });
   };
@@ -1132,6 +1164,22 @@
     });
   };
 
+  /* The invoice enrolling will raise, and the way to say no to it. Ticked by
+     default because billing the month they join is the normal case; a student
+     starting on the 28th is the reason it can be unticked. */
+  function billOnEnrol(c) {
+    var fee = c && c.fee != null ? c.fee : S.DEFAULT_FEE;
+    return '<label class="chip" style="display:inline-flex;margin-top:4px">' +
+        '<input type="checkbox" name="bill" checked>' +
+        '<span>' + T('Bill {month} — {money}', {
+          month: U.fmt.month(S.thisMonth()), money: U.fmt.money(fee)
+        }) + '</span></label>';
+  }
+  function billWanted() {
+    var el = document.querySelector('#modal-root [name="bill"]');
+    return !!(el && el.checked);
+  }
+
   /* ── putting a student in a class ──
      The one thing the Students page could never do before, because a student
      with no class was not on it. Pre-picks whatever they asked for when they
@@ -1166,8 +1214,9 @@
               ' \u00b7 ' + T('{n} enrolled', { n: n }) + '</option>';
           }).join('') +
         '</select></label>' +
+        billOnEnrol(asked || open[0]) +
         (S.classesOfStudent(s.id).length
-          ? '<p class="tiny muted" style="margin:0">' +
+          ? '<p class="tiny muted" style="margin:8px 0 0">' +
               T('Already in: {list}', {
                 list: U.esc(S.classesOfStudent(s.id).map(function (c) { return c.name; }).join(', '))
               }) + '</p>'
@@ -1175,10 +1224,13 @@
       okText: T('Enrol'),
       onOk: function () {
         var cid = U.Modal.val('classId');
-        var r = S.placeStudent(s.id, cid);
+        var r = S.placeStudent(s.id, cid, { bill: billWanted() });
         if (r.error) { U.toast(T(r.error), 'alert'); return; }
         U.Modal.close(); App.render();
-        U.toast(T('{name} joined {klass}', { name: s.name, klass: S.klass(cid).name }), 'check');
+        U.toast(r.invoice
+          ? T('{name} joined {klass} — {money} invoiced', {
+              name: s.name, klass: r.klass.name, money: U.fmt.money(r.invoice.amount) })
+          : T('{name} joined {klass}', { name: s.name, klass: r.klass.name }), 'check');
       }
     });
   };

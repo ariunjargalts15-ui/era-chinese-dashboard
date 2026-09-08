@@ -545,15 +545,37 @@
       return u && u.wantsClassId ? this.klass(u.wantsClassId) : null;
     },
 
-    /* Enrolling is what clears the request: it has been answered. */
-    placeStudent: function (sid, classId) {
+    /* ── enrolling ──
+       The one way a student joins a class, so that everything enrolment
+       implies happens once and cannot be forgotten at one of the four places
+       that enrol somebody.
+
+       It also raises their invoice. Tuition is billed per student per class
+       per month, and until this existed a new student had no invoice until
+       somebody remembered to run Bill {month} — so they were enrolled, sitting
+       in lessons, and invisible to Payments. Pass bill:false for a student who
+       genuinely should not be charged for the month they joined in. */
+    placeStudent: function (sid, classId, opts) {
+      opts = opts || {};
       var u = this.user(sid);
-      if (!u || u.role !== 'student') return { error: 'Wrong email or password' };
-      if (!this.klass(classId)) return { error: 'Pick a class' };
+      if (!u || u.role !== 'student') return { error: 'That is not a student' };
+      var c = this.klass(classId);
+      if (!c) return { error: 'Pick a class' };
+
       this.enroll(classId, sid);
-      if (u.wantsClassId) { delete u.wantsClassId; }
+      if (u.wantsClassId) { delete u.wantsClassId; }   /* the request is answered */
+
+      var invoice = null;
+      if (opts.bill !== false && !this.isGraduated(u)) {
+        var period = opts.period || thisMonth();
+        var already = this.invoicesOfClass(classId, period).filter(function (p) {
+          return p.studentId === sid;
+        })[0];
+        /* never a second invoice for the same student, class and month */
+        if (!already) invoice = this.addInvoice({ classId: classId, studentId: sid, period: period });
+      }
       this.save();
-      return { user: u };
+      return { user: u, klass: c, invoice: invoice };
     },
 
     graduates: function () {

@@ -253,6 +253,11 @@
       'Сургууль таныг ангид хуваарилна. Түүний дараа хуваарь, даалгавар, үгсийн сан бүгд энд гарна.',
     'Anything urgent? The contact details are on the school site.':
       'Яаралтай асуудал байвал сургуулийн хуудсанд холбоо барих мэдээлэл байгаа.',
+    /* billing on enrolment */
+    'Bill {month} — {money}': '{month}-н төлбөр — {money}',
+    '{name} joined {klass} — {money} invoiced': '{name} {klass}-д элслээ — {money} нэхэмжиллээ',
+    '{n} students enrolled — {money} invoiced': '{n} сурагч элслээ — {money} нэхэмжиллээ',
+    'That is not a student': 'Энэ сурагч биш байна',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -635,6 +640,11 @@
       '学校会为你分班。分班后，课表、作业和生词都会出现在这里。',
     'Anything urgent? The contact details are on the school site.':
       '有急事？学校网站上有联系方式。',
+    /* billing on enrolment */
+    'Bill {month} — {money}': '开具 {month} 账单 —— {money}',
+    '{name} joined {klass} — {money} invoiced': '{name} 已加入 {klass} —— 已开具 {money}',
+    '{n} students enrolled — {money} invoiced': '{n} 名学生已加入 —— 已开具 {money}',
+    'That is not a student': '这不是学生账号',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',
