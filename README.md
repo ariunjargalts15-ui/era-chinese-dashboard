@@ -116,6 +116,45 @@ place to change.
 Note that `meet.jit.si` sometimes asks the first participant to sign in as moderator,
 and browsers only grant camera and microphone over `https://` or `localhost`.
 
+## Who gets into an online lesson
+
+Only the class. A student may walk into a room when **all** of these hold:
+
+- the room is open — the teacher has pressed *Start the online lesson*
+- they are **enrolled in that lesson's class**
+- they have not graduated
+
+Any teacher may join any room; staff cover for each other.
+
+`Live.mayJoin()` is the single answer to that question, and everything asks it:
+the router before it builds the page, the page before it draws the room, the
+Join button before it appears, the heartbeat before it marks anyone present,
+and the chat before it accepts a message. Typing `#/s/live/<any lesson>` gets
+you turned around with a reason, not a classroom.
+
+In cloud mode the database refuses the same people independently, which is the
+enforcement that actually counts: a student cannot read a `live_rooms` row for
+a class they are not in, so the room does not exist as far as their browser is
+concerned. The checks in the app are there to explain the refusal, not to
+provide it.
+
+### The room across devices
+
+The room used to live in `localStorage` and a `BroadcastChannel`, which reach
+other tabs of the same browser and nothing further — so a teacher opening the
+room on a laptop was invisible to a student on a phone. With Supabase
+configured it is three tables, split by who owns what:
+
+| | Who writes it |
+| --- | --- |
+| `live_rooms` — open or closed, whiteboard, timer | the teacher |
+| `live_presence` — who is here, hands up | each person, their own row only |
+| `live_chat` — messages | each person, as themselves only |
+
+That split is why a student can put a hand up without also being able to end
+the lesson, and it is the policies enforcing it rather than the app being
+polite.
+
 ## Lesson lifecycle
 
 ```

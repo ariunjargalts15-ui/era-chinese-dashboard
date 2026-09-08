@@ -399,10 +399,17 @@
     var page = App.route[1] || 'dashboard';
     var param = App.route[2] || null;
 
-    /* a graduate has no live room to walk back into, even by a stale link */
-    if (page === 'live' && App.session.role === 'student' && S.isGraduated(App.session.userId)) {
-      location.hash = homeHash();
-      return;
+    /* The online classroom is the one page where a typed URL could put someone
+       in a room that is none of their business, so the router turns them
+       around before any of it is built. Live.mayJoin() is the single answer
+       to that question — the page, the heartbeat and the chat all ask it too. */
+    if (page === 'live') {
+      var why = global.Live.mayJoin(param, S.user(App.session.userId));
+      if (why) {
+        location.hash = homeHash();
+        U.toast(T(why), 'lock');
+        return;
+      }
     }
 
     /* The online classroom holds a live video iframe and a whiteboard canvas —
@@ -599,7 +606,10 @@
         global.Cloud.watch(function () {
           global.Cloud.hydrate().then(function (fresh) { S.refresh(fresh); });
         });
-        return { user: me };
+        /* the online classroom lives in its own tables, and only reaches
+           another device if we listen for it */
+        global.Live.sync.watch(function () { global.Live.pull(); });
+        return global.Live.pull().then(function () { return { user: me }; });
       });
     }
     App.startCloudSession = startCloudSession;

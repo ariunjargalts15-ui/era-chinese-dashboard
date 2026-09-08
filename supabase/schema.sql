@@ -385,3 +385,132 @@ begin
     end;
   end loop;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────
+-- the online classroom
+-- ─────────────────────────────────────────────────────────────
+-- The room used to live in localStorage and a BroadcastChannel, which reaches
+-- other tabs of the same browser and nothing else. A teacher opening the room
+-- on a laptop was invisible to a student on a phone, so the feature did not
+-- survive the move to one shared school.
+--
+-- Three tables rather than one, because the room and the people in it are not
+-- owned by the same person. The teacher runs the room; each student owns only
+-- their own presence and their own messages. That split is what lets a student
+-- raise a hand without also being able to end the lesson.
+
+create table if not exists public.live_rooms (
+  lesson_id   text primary key references public.lessons(id) on delete cascade,
+  class_id    text not null references public.classes(id) on delete cascade,
+  active      boolean not null default false,
+  host        uuid references public.profiles(id) on delete set null,
+  provider    text not null default 'jitsi',
+  room_name   text not null default '',
+  url         text not null default '',
+  started_at  bigint,
+  board       jsonb not null default '{}'::jsonb,
+  timer       jsonb,
+  updated_at  timestamptz not null default now()
+);
+
+create table if not exists public.live_presence (
+  lesson_id text not null references public.lessons(id) on delete cascade,
+  user_id   uuid not null references public.profiles(id) on delete cascade,
+  name      text not null default '',
+  role      text not null default 'student',
+  hand      boolean not null default false,
+  at        bigint not null default 0,
+  primary key (lesson_id, user_id)
+);
+
+create table if not exists public.live_chat (
+  id        text primary key,
+  lesson_id text not null references public.lessons(id) on delete cascade,
+  user_id   uuid references public.profiles(id) on delete set null,
+  name      text not null default '',
+  role      text not null default 'student',
+  text      text not null default '',
+  at        bigint not null default 0
+);
+create index if not exists live_chat_lesson_idx on public.live_chat (lesson_id, at);
+
+alter table public.live_rooms    enable row level security;
+alter table public.live_presence enable row level security;
+alter table public.live_chat     enable row level security;
+
+drop policy if exists live_rooms_teacher    on public.live_rooms;
+drop policy if exists live_rooms_student    on public.live_rooms;
+drop policy if exists live_presence_teacher on public.live_presence;
+drop policy if exists live_presence_read    on public.live_presence;
+drop policy if exists live_presence_own     on public.live_presence;
+drop policy if exists live_chat_teacher     on public.live_chat;
+drop policy if exists live_chat_read        on public.live_chat;
+drop policy if exists live_chat_own         on public.live_chat;
+
+-- staff run the room
+create policy live_rooms_teacher on public.live_rooms
+  for all to authenticated
+  using (public.is_teacher()) with check (public.is_teacher());
+
+-- A student may see a room only for a class they are enrolled in — so a
+-- lesson they are not in does not exist as far as their browser is concerned,
+-- whatever URL they type. This is the enforcement that counts; the checks in
+-- the app are there to explain it, not to provide it.
+create policy live_rooms_student on public.live_rooms
+  for select to authenticated
+  using (class_id in (select public.my_class_ids()));
+
+create policy live_presence_teacher on public.live_presence
+  for all to authenticated
+  using (public.is_teacher()) with check (public.is_teacher());
+
+-- everyone in the room can see who else is in it
+create policy live_presence_read on public.live_presence
+  for select to authenticated
+  using (lesson_id in (
+    select l.id from public.lessons l where l.class_id in (select public.my_class_ids())
+  ));
+
+-- but only their own row: nobody marks somebody else present, or puts a hand
+-- up in their name
+create policy live_presence_own on public.live_presence
+  for all to authenticated
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and lesson_id in (
+      select l.id from public.lessons l where l.class_id in (select public.my_class_ids())
+    )
+  );
+
+create policy live_chat_teacher on public.live_chat
+  for all to authenticated
+  using (public.is_teacher()) with check (public.is_teacher());
+
+create policy live_chat_read on public.live_chat
+  for select to authenticated
+  using (lesson_id in (
+    select l.id from public.lessons l where l.class_id in (select public.my_class_ids())
+  ));
+
+-- a student may only ever speak as themselves, and only in their own lesson
+create policy live_chat_own on public.live_chat
+  for insert to authenticated
+  with check (
+    user_id = auth.uid()
+    and lesson_id in (
+      select l.id from public.lessons l where l.class_id in (select public.my_class_ids())
+    )
+  );
+
+do $$
+declare t text;
+begin
+  foreach t in array array['live_rooms','live_presence','live_chat']
+  loop
+    begin
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    exception when duplicate_object then null;
+    end;
+  end loop;
+end $$;

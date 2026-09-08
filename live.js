@@ -19,8 +19,144 @@
   var CH = null;
   var listeners = [];
 
+  /* ── the room, across devices ──
+     Rooms used to live in localStorage and a BroadcastChannel, which reach
+     other tabs of the same browser and nothing further. Once the school moved
+     to one shared database that stopped being enough: a teacher opening the
+     room on a laptop was invisible to a student on a phone, which is most of
+     what an online lesson is for.
+
+     So when Supabase is configured the room goes there too — but split three
+     ways, because the room and the people in it are not owned by the same
+     person. The teacher owns the room: whether it is open, what is on the
+     whiteboard, the timer. Each person owns only their own presence and their
+     own messages. That is what lets a student put a hand up without also
+     being able to end the lesson, and it is enforced by the policies in
+     schema.sql, not by this file being polite. */
+  var Sync = {
+    on: function () { return !!(global.Cloud && global.Cloud.client); },
+    c: function () { return global.Cloud.client; },
+
+    roomRow: function (lessonId, r, classId) {
+      return {
+        lesson_id: lessonId, class_id: classId,
+        active: !!r.active, host: r.host || null,
+        provider: r.provider || 'jitsi', room_name: r.roomName || '',
+        url: r.url || '', started_at: r.startedAt || null,
+        board: r.board || {}, timer: r.timer || null,
+        updated_at: new Date().toISOString()
+      };
+    },
+
+    /* the teacher's half */
+    pushRoom: function (lessonId) {
+      if (!this.on()) return;
+      var r = Live.rooms[lessonId];
+      if (!r) return;
+      var lesson = global.Store.lesson(lessonId);
+      if (!lesson) return;
+      this.c().from('live_rooms')
+        .upsert([this.roomRow(lessonId, r, lesson.classId)], { onConflict: 'lesson_id' })
+        .then(function (res) {
+          if (res && res.error && global.console) console.error('live room:', res.error.message);
+        });
+    },
+
+    /* everyone's own half */
+    pushPresence: function (lessonId, user, hand) {
+      if (!this.on()) return;
+      this.c().from('live_presence').upsert([{
+        lesson_id: lessonId, user_id: user.id, name: user.name || '',
+        role: user.role || 'student', hand: !!hand, at: Date.now()
+      }], { onConflict: 'lesson_id,user_id' }).then(function () {});
+    },
+
+    dropPresence: function (lessonId, userId) {
+      if (!this.on()) return;
+      this.c().from('live_presence').delete()
+        .eq('lesson_id', lessonId).eq('user_id', userId).then(function () {});
+    },
+
+    pushChat: function (lessonId, msg) {
+      if (!this.on()) return;
+      this.c().from('live_chat').upsert([{
+        id: msg.id, lesson_id: lessonId, user_id: msg.from,
+        name: msg.name || '', role: msg.role || 'student',
+        text: msg.text || '', at: msg.at || Date.now()
+      }], { onConflict: 'id' }).then(function () {});
+    },
+
+    /* Read back whatever this person is allowed to see. A student asking for a
+       room in a class they are not in gets nothing at all — the database does
+       not tell them it exists. */
+    pull: function () {
+      if (!this.on()) return Promise.resolve(null);
+      var c = this.c();
+      return Promise.all([
+        c.from('live_rooms').select('*'),
+        c.from('live_presence').select('*'),
+        c.from('live_chat').select('*')
+      ]).then(function (res) {
+        var rooms = {};
+        (res[0].data || []).forEach(function (row) {
+          rooms[row.lesson_id] = {
+            active: !!row.active, startedAt: row.started_at || null, host: row.host || null,
+            provider: row.provider || 'jitsi', roomName: row.room_name || '',
+            url: row.url || '',
+            board: row.board || { mode: 'idle', i: 0, reveal: false, text: '', strokes: [], quiz: null, picked: '' },
+            timer: row.timer || null,
+            people: {}, hands: {}, chat: []
+          };
+        });
+        (res[1].data || []).forEach(function (row) {
+          var r = rooms[row.lesson_id];
+          if (!r) return;
+          r.people[row.user_id] = { name: row.name, role: row.role, at: row.at };
+          if (row.hand) r.hands[row.user_id] = true;
+        });
+        (res[2].data || []).sort(function (a, b) { return (a.at || 0) - (b.at || 0); })
+          .forEach(function (row) {
+            var r = rooms[row.lesson_id];
+            if (!r) return;
+            r.chat.push({ id: row.id, from: row.user_id, name: row.name,
+                          role: row.role, text: row.text, at: row.at });
+          });
+        return rooms;
+      });
+    },
+
+    watch: function (onChange) {
+      if (!this.on() || this.channel) return;
+      var timer = null;
+      var ch = this.c().channel('live');
+      ['live_rooms', 'live_presence', 'live_chat'].forEach(function (t) {
+        ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, function () {
+          /* a whiteboard stroke is a row; coalesce or the page redraws
+             faster than anyone can draw */
+          if (timer) return;
+          timer = setTimeout(function () { timer = null; onChange(); }, 200);
+        });
+      });
+      ch.subscribe();
+      this.channel = ch;
+    },
+    channel: null
+  };
+
   var Live = {
     rooms: {},
+    sync: Sync,
+
+    /* Cloud mode: take the rooms the database is willing to show us. */
+    pull: function () {
+      var self = this;
+      return Sync.pull().then(function (rooms) {
+        if (!rooms) return null;
+        self.rooms = rooms;
+        notify();
+        return rooms;
+      });
+    },
 
     load: function () {
       try {
@@ -45,6 +181,44 @@
 
     room: function (lessonId) { return this.rooms[lessonId] || null; },
 
+    /* ── who is allowed in ──
+       Every way into a room asks this: the router, the page, the join button,
+       the heartbeat and the chat. Before it existed the only check anywhere
+       was that a student had not graduated, so typing #/s/live/<any lesson>
+       walked into any class in the school.
+
+       Returns null when the person may join, or the reason they may not, so
+       the caller can say something better than a blank page.
+
+       In cloud mode the database refuses the same people independently — a
+       student cannot even read a room row for a class they are not in. This
+       is here to explain the refusal, not to be the only thing enforcing it. */
+    mayJoin: function (lessonId, user) {
+      var S = global.Store;
+      if (!user) return 'Sign in first';
+
+      var lesson = S.lesson(lessonId);
+      if (!lesson) return 'That lesson does not exist';
+
+      /* Staff run the school and cover for each other, so any teacher may
+         join any room. Students are held to their own class. */
+      if (user.role === 'teacher') return null;
+
+      if (S.isGraduated(user)) return 'Your course is finished';
+
+      var enrolled = S.classesOfStudent(user.id).some(function (c) {
+        return c.id === lesson.classId;
+      });
+      if (!enrolled) return 'You are not in this class';
+
+      var r = this.rooms[lessonId];
+      if (!r || !r.active) return 'The lesson has not started yet';
+      return null;
+    },
+
+    /* the same question, as a yes or no */
+    canJoin: function (lessonId, user) { return this.mayJoin(lessonId, user) === null; },
+
     /* the teacher opens the room */
     start: function (lesson, teacher) {
       var on = lesson.online || {};
@@ -62,6 +236,7 @@
       r.hands = r.hands || {};
       r.timer = r.timer || null;
       this.save();
+      Sync.pushRoom(lesson.id);
       return r;
     },
 
@@ -73,15 +248,25 @@
       r.hands = {};
       r.timer = null;
       this.save();
+      Sync.pushRoom(lessonId);
+      /* everyone's presence goes with the room; each row is theirs to remove,
+         so the teacher clears the ones RLS lets them and the rest lapse on
+         the staleness cut when nobody heartbeats them any more */
+      if (Sync.on()) {
+        Sync.c().from('live_presence').delete().eq('lesson_id', lessonId).then(function () {});
+      }
     },
 
     /* presence — refreshed by a heartbeat, stale entries are dropped on read */
     beat: function (lessonId, user) {
       var r = this.rooms[lessonId];
       if (!r || !r.active) return;
+      /* presence is a claim to be in the room, so it is checked like any other */
+      if (!this.canJoin(lessonId, user)) return;
       r.people = r.people || {};
       r.people[user.id] = { name: user.name, role: user.role, at: Date.now() };
       this.saveRemote();
+      Sync.pushPresence(lessonId, user, !!(r.hands || {})[user.id]);
     },
     leave: function (lessonId, userId) {
       var r = this.rooms[lessonId];
@@ -89,6 +274,7 @@
       delete r.people[userId];
       if (r.hands) delete r.hands[userId];
       this.save();
+      Sync.dropPresence(lessonId, userId);
     },
     present: function (lessonId) {
       var r = this.rooms[lessonId];
@@ -105,23 +291,33 @@
       r.board = r.board || {};
       Object.keys(patch).forEach(function (k) { r.board[k] = patch[k]; });
       this.save();
+      Sync.pushRoom(lessonId);
     },
 
     say: function (lessonId, user, text) {
       var r = this.rooms[lessonId];
       if (!r) return;
+      /* speaking in a room is being in it */
+      if (!this.canJoin(lessonId, user)) return;
       r.chat = r.chat || [];
-      r.chat.push({ id: S.uid('m'), from: user.id, name: user.name, role: user.role, text: text, at: Date.now() });
+      var msg = { id: S.uid('m'), from: user.id, name: user.name, role: user.role, text: text, at: Date.now() };
+      r.chat.push(msg);
       if (r.chat.length > 200) r.chat = r.chat.slice(-200);
       this.save();
+      Sync.pushChat(lessonId, msg);
     },
 
     hand: function (lessonId, userId, up) {
       var r = this.rooms[lessonId];
+      if (!this.canJoin(lessonId, global.Store.user(userId))) return;
       if (!r) return;
       r.hands = r.hands || {};
       if (up) r.hands[userId] = Date.now(); else delete r.hands[userId];
       this.save();
+      /* a raised hand rides on the person's own presence row, which is the
+         only row they are allowed to write */
+      var who = global.Store.user(userId);
+      if (who) Sync.pushPresence(lessonId, who, up);
     },
 
     /* the meeting URL the iframe and the "open in a tab" button both use */
@@ -171,6 +367,21 @@
       var lesson = S.lesson(lessonId);
       var user = S.user(App.session.userId);
       if (!lesson) { root.innerHTML = '<div class="card">' + U.empty('alert', T('Lesson not found')) + '</div>'; return; }
+
+      /* The last gate before the room is drawn. The router turns most of these
+         away first, but a room that ends while somebody is walking in reaches
+         here, and so does anything the router has not thought of. */
+      var why = Live.mayJoin(lessonId, user);
+      if (why) {
+        root.innerHTML = '<div class="card"><div class="card__b" style="text-align:center;padding:40px 24px">' +
+          '<div class="av" style="background:var(--amber);margin:0 auto 14px">' + U.icon('lock') + '</div>' +
+          '<h3 style="font-size:18px">' + T('You cannot join this lesson') + '</h3>' +
+          '<p class="muted" style="margin:8px auto 0;max-width:42ch">' + U.esc(T(why)) + '</p>' +
+          '<a class="btn mt" href="' + (App.session.role === 'teacher' ? '#/t/lessons' : '#/s/lessons') + '">' +
+            T('Back to lessons') + '</a>' +
+        '</div></div>';
+        return;
+      }
 
       mounted = { lessonId: lessonId, role: App.session.role };
 

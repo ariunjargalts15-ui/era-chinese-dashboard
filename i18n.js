@@ -257,6 +257,14 @@
     'Opening the school…': 'Сургуулийг нээж байна…',
     'Check your email to confirm your account': 'Бүртгэлээ баталгаажуулах и-мэйлээ шалгана уу',
     'Something went wrong': 'Алдаа гарлаа',
+    /* who may walk into the online classroom */
+    'You cannot join this lesson': 'Та энэ хичээлд нэгдэж чадахгүй',
+    'You are not in this class': 'Та энэ ангид ороогүй байна',
+    'The lesson has not started yet': 'Хичээл хараахан эхлээгүй байна',
+    'That lesson does not exist': 'Ийм хичээл байхгүй байна',
+    'Your course is finished': 'Таны хичээл дууссан байна',
+    'Sign in first': 'Эхлээд нэвтэрнэ үү',
+    'Back to lessons': 'Хичээлүүд рүү буцах',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -642,6 +650,14 @@
     'Opening the school…': '正在打开学校…',
     'Check your email to confirm your account': '请查收邮件以确认你的账号',
     'Something went wrong': '出错了',
+    /* who may walk into the online classroom */
+    'You cannot join this lesson': '你无法加入这节课',
+    'You are not in this class': '你不在这个班级',
+    'The lesson has not started yet': '课程还没有开始',
+    'That lesson does not exist': '该课程不存在',
+    'Your course is finished': '你的课程已结束',
+    'Sign in first': '请先登录',
+    'Back to lessons': '返回课程',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',

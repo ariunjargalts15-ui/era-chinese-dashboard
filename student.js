@@ -8,9 +8,14 @@
   function init() { U = global.UI; S = global.Store; }
   function me() { return S.user(App.session.userId); }
 
+  /* "Live" on a student's screen means a room they can actually walk into,
+     not merely one that is open somewhere in the school. Asking the same
+     question the door asks means every Join button on every page is right by
+     construction rather than by each of them remembering to check. */
   function isLive(lessonId) {
     var r = global.Live && global.Live.room(lessonId);
-    return !!(r && r.active);
+    if (!r || !r.active) return false;
+    return global.Live.canJoin(lessonId, me());
   }
 
   /* A graduate keeps the whole record — every register, mark, word and grade —
@@ -549,8 +554,10 @@
   /* ══ ACTIONS ═════════════════════════════════════════ */
   A.sOpenLesson = function (e) { App.go('#/s/lesson/' + e.getAttribute('data-id')); };
   A.sGoLive = function (e) {
-    if (graduated()) { U.toast(T('Your course has finished'), 'grad'); return; }
-    App.go('#/s/live/' + e.getAttribute('data-id'));
+    var id = e.getAttribute('data-id');
+    var why = global.Live.mayJoin(id, me());
+    if (why) { U.toast(T(why), 'lock'); return; }
+    App.go('#/s/live/' + id);
   };
   A.setSScope = function (e) { App.filters.sScope = e.getAttribute('data-v'); App.render(); };
   A.setSHw = function (e) { App.filters.sHw = e.getAttribute('data-v'); App.render(); };
