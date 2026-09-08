@@ -567,13 +567,6 @@ tbody tr:hover { background:var(--card-2); }
 .site__hero h1 { font-size:31px; letter-spacing:-.02em; margin:0; }
 .site__hero p { color:var(--ink-3); margin:8px 0 0; font-size:15px; max-width:60ch; }
 
-.site__cta {
-  margin-top:26px; padding:22px 24px; border-radius:var(--r-lg);
-  background:var(--card-2); border:1px solid var(--line);
-  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-}
-.site__cta b { flex:1; font-size:16px; }
-
 /* ── notices ── */
 .notices { display:flex; flex-direction:column; gap:12px; }
 .notice {
@@ -585,16 +578,6 @@ tbody tr:hover { background:var(--card-2); }
 .notice b { display:block; font-size:17px; line-height:1.35; }
 .notice p { margin:9px 0 0; color:var(--ink-2); font-size:14px; line-height:1.65; white-space:pre-wrap; }
 .notice .tiny.muted:last-child { margin-top:10px; }
-
-/* ── courses ── */
-.course__meta { margin-top:14px; display:flex; flex-direction:column; gap:7px; }
-.course__meta div { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-3); }
-.course__meta svg { flex:none; color:var(--ink-4); }
-.course__fee {
-  margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
-  display:flex; align-items:baseline; gap:2px;
-}
-.course__fee b { font-size:19px; color:var(--brand); }
 
 /* ── sign in / create an account ── */
 /* the sign-in and join forms, inside the right half of the split screen */

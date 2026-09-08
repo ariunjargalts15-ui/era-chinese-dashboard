@@ -126,34 +126,43 @@
     return out;
   }
 
+  /* ── the school's own details ──
+     Shown in the public header and footer, and on the contact page. These are
+     placeholders: replace them with the school's real phone, email, address
+     and social links, here, and they change everywhere at once. */
+  function defaultSchool() {
+    return {
+      name: 'ERA CHINESE', cn: '\u65f6\u4ee3\u6c49\u8bed',
+      phone: '7710-1251 (1)', phone2: '7710-1251 (2)',
+      email: 'sales@erachinese.mn', support: 'support@erachinese.mn',
+      address: 'Sukhbaatar District, 1st khoroo, Ulaanbaatar',
+      facebook: 'https://facebook.com/erachinese',
+      instagram: 'https://instagram.com/erachinese'
+    };
+  }
+
   /* ── seed ─────────────────────────────────────────────── */
   function seed() {
     var r = rng(20260905);
 
+    /* A real school starts with nobody in it. The one account here exists
+       so somebody can get in and set the school up; rename it, change its
+       password, add the real staff, then remove it. */
     var users = [
-      { id: 'u_t1', role: 'teacher', name: 'Sarangerel Batbold', cn: '萨仁', email: 'sarangerel@erachinese.mn', color: '#C8443C', title: 'Senior instructor · HSK 1–3' },
-      { id: 'u_t2', role: 'teacher', name: 'Li Wei', cn: '李伟', email: 'liwei@erachinese.mn', color: '#2C7A62', title: 'Native instructor · Business Chinese' },
-      { id: 'u_s1', role: 'student', name: 'Anujin Erdene', cn: '安娜', email: 'anujin@student.mn', color: '#A8862A' },
-      { id: 'u_s2', role: 'student', name: 'Bat-Erdene Sukh', cn: '巴特', email: 'baterdene@student.mn', color: '#4A5A6A' },
-      { id: 'u_s3', role: 'student', name: 'Nomin Tuvshin', cn: '诺敏', email: 'nomin@student.mn', color: '#8A4FA0' },
-      { id: 'u_s4', role: 'student', name: 'Temuulen Boldbaatar', cn: '铁木伦', email: 'temuulen@student.mn', color: '#B45A2B' },
-      { id: 'u_s5', role: 'student', name: 'Solongo Dorj', cn: '索龙高', email: 'solongo@student.mn', color: '#2F6FA8' },
-      { id: 'u_s6', role: 'student', name: 'Khulan Munkh', cn: '呼兰', email: 'khulan@student.mn', color: '#B03060' },
-      { id: 'u_s7', role: 'student', name: 'Gantulga Baasan', cn: '甘图拉', email: 'gantulga@student.mn', color: '#3D7A4A',
-        status: 'graduated', graduatedAt: offset(-9) },
-      { id: 'u_s8', role: 'student', name: 'Odval Tsend', cn: '敖德娃', email: 'odval@student.mn', color: '#7A5AA8' }
+      { id: 'u_t1', role: 'teacher', name: 'School office', cn: '\u6559\u52a1\u5904',
+        email: 'admin@erachinese.mn', color: '#5227E0', title: 'Administrator' }
     ];
 
     var classes = [
       { id: 'c1', name: 'HSK 1 · Foundations', cn: '初级一班', level: 'HSK 1', room: 'Room 201',
         teacherId: 'u_t1', days: 'Mon · Wed · Fri', time: '18:00', fee: 180000,
-        studentIds: ['u_s1', 'u_s2', 'u_s3', 'u_s4', 'u_s5'] },
+        studentIds: [] },
       { id: 'c2', name: 'HSK 3 · Intermediate', cn: '中级三班', level: 'HSK 3', room: 'Room 305',
         teacherId: 'u_t1', days: 'Tue · Thu', time: '19:30', fee: 220000,
-        studentIds: ['u_s3', 'u_s6', 'u_s7', 'u_s8'] },
+        studentIds: [] },
       { id: 'c3', name: 'Business Chinese', cn: '商务汉语', level: 'HSK 4+', room: 'Room 102',
-        teacherId: 'u_t2', days: 'Sat', time: '10:00', fee: 320000,
-        studentIds: ['u_s2', 'u_s5', 'u_s6', 'u_s8'] }
+        teacherId: 'u_t1', days: 'Sat', time: '10:00', fee: 320000,
+        studentIds: [] }
     ];
 
     /* [class, deck, day offset, time, homework] */
@@ -256,16 +265,7 @@
 
     return {
       version: 3,
-      school: {
-        name: 'ERA CHINESE', cn: '时代汉语',
-        /* Shown in the public header and footer. Replace these with the
-           school's real details — they are the only invented values here. */
-        phone: '7710-1251 (1)', phone2: '7710-1251 (2)',
-        email: 'sales@erachinese.mn', support: 'support@erachinese.mn',
-        address: 'Sukhbaatar District, 1st khoroo, Ulaanbaatar',
-        facebook: 'https://facebook.com/erachinese',
-        instagram: 'https://instagram.com/erachinese'
-      },
+      school: defaultSchool(),
       users: users,
       classes: classes,
       decks: DECKS,
@@ -282,25 +282,9 @@
      The school's noticeboard. A draft is written but not out yet; publishing is
      what puts it on the sign-in page, where anyone who has not signed in can
      read it. Pinned items lead the board however old they are. */
-  function seedNews() {
-    return [
-      { id: 'n1', title: 'Autumn intake is open', cn: '秋季招生开始',
-        body: 'Registration for the autumn HSK 1 and HSK 3 groups is open until the end of the month. ' +
-              'Classes run three evenings a week and start at 18:00. Come to reception or write to us to hold a place.',
-        date: offset(-3), pinned: true, published: true, authorId: 'u_t1' },
-      { id: 'n2', title: 'HSK exam dates announced', cn: 'HSK 考试日期公布',
-        body: 'The next official HSK sitting is in six weeks. Levels 1 to 4 are held on the Saturday, ' +
-              'levels 5 and 6 on the Sunday. Tell your teacher which level you intend to sit so we can prepare you for it.',
-        date: offset(-8), pinned: false, published: true, authorId: 'u_t2' },
-      { id: 'n3', title: 'Mid-autumn festival — no classes', cn: '中秋节放假',
-        body: 'The school is closed for the festival and every lesson that day is moved a week on. ' +
-              'Your timetable already shows the new dates.',
-        date: offset(-15), pinned: false, published: true, authorId: 'u_t1' },
-      { id: 'n4', title: 'New Business Chinese materials', cn: '新商务汉语教材',
-        body: 'Draft — waiting on the printer before this goes out.',
-        date: offset(-1), pinned: false, published: false, authorId: 'u_t2' }
-    ];
-  }
+  /* The noticeboard starts empty — whatever a real school announces is
+     written by a real teacher. */
+  function seedNews() { return []; }
 
   /* A school saved before tuition existed keeps its classes, lessons and marks —
      it only gains a fee per class and the invoices that follow from it. */
@@ -313,9 +297,15 @@
     }
     if (!d.payments) d.payments = [];
     d.payments.forEach(function (p) { if (p.advance == null) p.advance = 0; });
-    /* a school saved before the noticeboard existed gets the seeded one, so the
-       feature is not an empty page on first sight */
     if (!d.news) d.news = seedNews();
+    /* A school saved before the public site existed has only a name, so the
+       header and footer had nothing to print. Fill in whatever is missing
+       without touching details that have already been edited. */
+    d.school = d.school || {};
+    var contact = defaultSchool();
+    Object.keys(contact).forEach(function (k) {
+      if (d.school[k] == null || d.school[k] === '') d.school[k] = contact[k];
+    });
     /* Accounts saved before sign-in existed have no password. Rather than lock
        the school's own staff out of it, each gets the starting password, which
        the README names and everyone should change. */

@@ -16,13 +16,14 @@ python -m http.server 4180 -d era-chinese-lite
 
 Then go to <http://localhost:4180>. You land on the sign-in screen, the
 calligraphy loop running behind the brand panel. Sign in with
-`sarangerel@erachinese.mn` / `era2026pw` for the teacher's side, or **create an
-account** to come in as a new student. The links under the form open the rest of
-the school site — the noticeboard, the courses and the contact page.
+`admin@erachinese.mn` / `era2026pw` for the teacher's side, or **create an
+account** to come in as a new student. **Read [Where the data actually
+lives](#where-the-data-actually-lives) before putting anything real into it.** The links under the form open the rest of
+the school site — the noticeboard and the contact page.
 
 **To try a live lesson with both roles at once**, open the app in **two browser
-tabs**: sign in as `sarangerel@erachinese.mn` in one and `anujin@student.mn` in
-the other (both `era2026pw`). Each tab keeps
+tabs**: sign in as `admin@erachinese.mn` in one and a student account you
+created in the other. Each tab keeps
 its own account (the session lives in `sessionStorage`) while both read and write the
 same school.
 
@@ -130,15 +131,14 @@ records any student still unmarked as **absent** and closes the register.
 
 Everything before an account exists lives at `#/p/...`. **Signing in is what
 launches**, on the original split screen — the calligraphy loop and the wordmark
-on the left, the form on the right. The noticeboard, the courses and the contact
-page are wrapped in a header and a footer, and the links under the sign-in form
+on the left, the form on the right. The noticeboard and the contact page
+are wrapped in a header and a footer, and the links under the sign-in form
 lead to them:
 
 | Page | What a visitor gets |
 | --- | --- |
 | **Sign in** `#/p/login` | The landing page. Email and password, on the split screen |
 | **News** `#/p/news` | The noticeboard. Published notices only; drafts never leave the teacher's screen |
-| **Courses** `#/p/classes` | Every class actually running, with level, timetable, teacher, how many are studying, and the monthly fee |
 | **Contact** `#/p/contact` | Phone, email, address |
 | **Create an account** `#/p/join` | Opens a **student** account, same screen |
 
@@ -167,9 +167,9 @@ stranger cannot use the form to discover who has an account.
 
 ### The starting password
 
-Every seeded account starts on **`era2026pw`** — including
-`sarangerel@erachinese.mn` (teacher) and `anujin@student.mn` (student). Change it
-on first sign-in.
+The one account that ships, `admin@erachinese.mn`, starts on **`era2026pw`**.
+Change it on first sign-in — the password is in this README, so until you do,
+anyone who finds the site can sign in as the school office.
 
 ### What the passwords are worth
 
@@ -297,16 +297,50 @@ State lives in three keys: `era-chinese-lite/v1` (the school),
 different accounts. **Reset demo** in the top bar puts everything back — it is teachers-only,
 and it deletes every account opened since the seed, so it warns before it runs.
 
-## The seeded school
+## What ships in the box
 
-3 classes (HSK 1 Foundations, HSK 3 Intermediate, Business Chinese), 2 teachers,
-8 students — one of whom (Gantulga Baasan) has already graduated, so the *Graduated*
-tab is not empty on a fresh demo — 23 lessons spread three weeks either side of today,
-with attendance, homework, grades and skill assessments already filled in. Four notices sit on the
-noticeboard, three published and one left as a draft. Ten vocabulary decks of
-eight words each, with pinyin and meanings, carry the lessons. Tuition is billed for
-the last three months (180,000₮ · 220,000₮ · 320,000₮ a month) — the older months are
-nearly all settled, this month is not.
+**No demo people.** The school starts with:
+
+- **one account** — `admin@erachinese.mn` / `era2026pw`, named *School office*.
+  It exists so somebody can get in and set the school up.
+- **three empty classes** — HSK 1, HSK 3, Business Chinese, with their fees and
+  timetables, and their lessons. Rosters are empty.
+- **an empty noticeboard**, no students, no registers, no grades, no invoices.
+
+First thing to do on a fresh deploy: sign in as that account, change its
+password, add the real teachers under *Students → Add a teacher*, and put the
+school's real phone, email and address into `defaultSchool()` in
+[store.js](store.js).
+
+> **The classes and lessons are still placeholders.** They are there so the app
+> is not empty on first sight. Delete them and make your own.
+
+## Where the data actually lives
+
+**In the browser, and nowhere else.** Everything — accounts, students,
+registers, grades, invoices, notices — is one JSON blob in `localStorage`
+under `era-chinese-lite/v1`, in whichever browser it was typed into.
+
+Deploying to Vercel does not change this. Vercel serves the HTML, CSS and JS as
+static files; there is no database and no server-side code, so:
+
+| | |
+| --- | --- |
+| A student registers on their phone | That account exists **only on their phone**. The teacher never sees it |
+| The teacher marks a register | It is saved **only in the teacher's browser** |
+| The teacher opens the site on a second computer | An empty school — nothing carries across |
+| Someone clears their browser data | **Everything is gone. There is no backup** |
+| Two teachers both use it | Two separate schools that never meet |
+
+The cross-tab sync in `live.js` works between **tabs of the same browser on the
+same machine** — that is `BroadcastChannel` and a shared `localStorage` key, not
+a network.
+
+So this is complete and usable as a **single-machine** record book. It is not
+yet a system a school can run on. Making it one means adding a backend and
+moving three things to it: the accounts and passwords, the school data, and the
+live-lesson state. Supabase or Firebase both drop into a static Vercel site
+without a build step, which is the shortest path from here.
 
 ## Adding to it
 

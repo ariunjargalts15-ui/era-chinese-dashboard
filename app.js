@@ -92,10 +92,9 @@
 
   var PUB = [
     { k: 'news', label: 'News', cn: '公告' },
-    { k: 'classes', label: 'Courses', cn: '课程' },
     { k: 'contact', label: 'Contact', cn: '联系' }
   ];
-  var PUB_PAGES = ['news', 'classes', 'contact', 'login', 'join'];
+  var PUB_PAGES = ['news', 'contact', 'login', 'join'];
 
   function publicPage() {
     /* Opening the app lands on the sign-in screen, the way it always has —
@@ -109,9 +108,7 @@
        a page and a footer. */
     if (page === 'login' || page === 'join') return authScreen(page);
 
-    var body = page === 'classes' ? coursesPage()
-             : page === 'contact' ? contactPage()
-             : newsPage();
+    var body = page === 'contact' ? contactPage() : newsPage();
 
     return '<div class="site">' +
         siteHeader(page) +
@@ -182,8 +179,6 @@
             '<div style="margin-top:10px"><a href="#/p/news">' +
               U.icon('megaphone', 14) + ' ' + T('School news') +
               (S.published().length ? ' · ' + S.published().length : '') + '</a>' +
-              '<span class="muted"> · </span>' +
-              '<a href="#/p/classes">' + T('Courses') + '</a>' +
               '<span class="muted"> · </span>' +
               '<a href="#/p/contact">' + T('Contact') + '</a></div>' +
           '</div>' +
@@ -268,35 +263,6 @@
     '</article>';
   }
 
-  /* ── what the school teaches ──
-     Real classes out of the store, so a visitor sees the actual timetable. */
-  function coursesPage() {
-    return '<div class="site__hero">' +
-        '<h1>' + T('Courses') + '</h1>' +
-        '<p>' + T('Every group running right now, with its level, timetable and monthly fee.') + '</p>' +
-      '</div>' +
-      '<div class="grid g3">' + S.data.classes.map(function (c) {
-        var teacher = S.user(c.teacherId);
-        var studying = S.rosterOf(c).filter(function (id) { return !S.isGraduated(id); }).length;
-        return '<div class="card course"><div class="card__b">' +
-          '<span class="tag tag--slate">' + U.esc(c.level) + '</span>' +
-          '<h3 style="margin:10px 0 2px">' + U.esc(c.name) + '</h3>' +
-          '<div class="cn muted">' + U.esc(c.cn) + '</div>' +
-          '<div class="course__meta">' +
-            '<div>' + U.icon('clock', 14) + U.esc(U.daysLabel(c.days) + ' · ' + c.time) + '</div>' +
-            (teacher ? '<div>' + U.icon('user', 14) + U.esc(teacher.name) + '</div>' : '') +
-            '<div>' + U.icon('users', 14) + T('{n} studying', { n: studying }) + '</div>' +
-          '</div>' +
-          '<div class="course__fee"><b>' + U.esc(U.fmt.money(c.fee == null ? 0 : c.fee)) + '</b>' +
-            '<span class="muted tiny"> / ' + T('month') + '</span></div>' +
-        '</div></div>';
-      }).join('') + '</div>' +
-      '<div class="site__cta">' +
-        '<b>' + T('Want to join one of these?') + '</b>' +
-        '<a class="btn btn--cta" href="#/p/join">' + T('Create an account') + '</a>' +
-      '</div>';
-  }
-
   function contactPage() {
     var sc = S.data.school;
     return '<div class="site__hero">' +
@@ -370,8 +336,8 @@
             langPicker() +
             '<span class="tag tag--gold">' + U.fmt.dateLong(S.today()) + '</span>' +
             (role === 'teacher'
-              ? '<button class="btn btn--sm" data-act="resetDemo" title="' + T('Restore the demo school') + '">' +
-                  U.icon('shuffle') + T('Reset demo') + '</button>'
+              ? '<button class="btn btn--sm" data-act="resetDemo" title="' + T('Erase everything and start the school over') + '">' +
+                  U.icon('shuffle') + T('Start over') + '</button>'
               : '') +
           '</header>' +
           '<div class="page">' + body + '</div>' +
@@ -557,8 +523,8 @@
     A.burger = function () { document.body.classList.toggle('nav-open'); };
     A.resetDemo = function () {
       U.Modal.open({
-        title: T('Reset the demo school'),
-        body: '<p style="margin:0">' + T('Every class, lesson, register, grade and assessment goes back to how it started. Anything you added here is lost.') + '</p>' +
+        title: T('Start the school over'),
+        body: '<p style="margin:0">' + T('Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.') + '</p>' +
           '<p style="margin:10px 0 0;color:var(--red);font-weight:600">' +
           T('Every account opened since then is deleted too, and everyone is signed out.') + '</p>',
         okText: T('Reset'),
@@ -571,7 +537,7 @@
           if (App.session && !S.user(App.session.userId)) {
             App.session = null; saveSession(); location.hash = '';
           }
-          U.Modal.close(); render(true); U.toast(T('Demo school restored'), 'shuffle');
+          U.Modal.close(); render(true); U.toast(T('The school was reset'), 'shuffle');
         }
       });
     };

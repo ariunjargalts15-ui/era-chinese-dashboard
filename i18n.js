@@ -204,6 +204,12 @@
       'Тэд энэ и-мэйл, нууц үгээр нэвтэрнэ. Солихыг нь хэлээрэй.',
     'Every account opened since then is deleted too, and everyone is signed out.':
       'Түүнээс хойш үүсгэсэн бүх бүртгэл мөн устаж, бүгд системээс гарна.',
+    'Start over': 'Шинээр эхлэх',
+    'Start the school over': 'Сургуулийг шинээр эхлүүлэх',
+    'Erase everything and start the school over': 'Бүгдийг устгаж сургуулийг шинээр эхлүүлэх',
+    'Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.':
+      'Бүх сурагч, ирц, дүн, нэхэмжлэх, мэдээ устаж, сургууль анхны байдалдаа буцна.',
+    'The school was reset': 'Сургуулийг шинээр эхлүүллээ',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -538,6 +544,12 @@
       '他们用此邮箱和密码登录，请提醒尽快修改。',
     'Every account opened since then is deleted too, and everyone is signed out.':
       '此后创建的所有账号也会被删除，并且所有人都会退出登录。',
+    'Start over': '重新开始',
+    'Start the school over': '重置学校',
+    'Erase everything and start the school over': '清除全部数据并重置学校',
+    'Every student, register, grade, invoice and notice is erased and the school goes back to how it shipped.':
+      '所有学生、考勤、成绩、账单和公告都会被清除，学校恢复到初始状态。',
+    'The school was reset': '学校已重置',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',
