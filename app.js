@@ -98,8 +98,11 @@
   var PUB_PAGES = ['news', 'classes', 'contact', 'login', 'join'];
 
   function publicPage() {
-    var page = App.route[0] === 'p' ? (App.route[1] || 'news') : 'news';
-    if (PUB_PAGES.indexOf(page) === -1) page = 'news';
+    /* Opening the app lands on the sign-in screen, the way it always has —
+       the brand panel and its clip are the first thing the school shows.
+       The rest of the public site hangs off the link underneath it. */
+    var page = App.route[0] === 'p' ? (App.route[1] || 'login') : 'login';
+    if (PUB_PAGES.indexOf(page) === -1) page = 'login';
 
     /* Signing in and joining keep the split screen: the brand panel on the
        left, the form on the right. The rest of the public site is a header,
@@ -174,7 +177,15 @@
             (join
               ? T('Already have one?') + ' <a href="#/p/login">' + T('Sign in') + '</a>'
               : T('No account yet?') + ' <a href="#/p/join">' + T('Create a student account') + '</a>') +
-            '<div style="margin-top:10px"><a href="#/p/news">' + T('Back to the school site') + '</a></div>' +
+            /* the noticeboard is a page of its own now, so the way to it has
+               to be visible from the door — with its count, as the tab had */
+            '<div style="margin-top:10px"><a href="#/p/news">' +
+              U.icon('megaphone', 14) + ' ' + T('School news') +
+              (S.published().length ? ' · ' + S.published().length : '') + '</a>' +
+              '<span class="muted"> · </span>' +
+              '<a href="#/p/classes">' + T('Courses') + '</a>' +
+              '<span class="muted"> · </span>' +
+              '<a href="#/p/contact">' + T('Contact') + '</a></div>' +
           '</div>' +
         '</div>' +
       '</div>';

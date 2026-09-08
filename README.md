@@ -14,10 +14,11 @@ Open `index.html` directly, or serve the folder:
 python -m http.server 4180 -d era-chinese-lite
 ```
 
-Then go to <http://localhost:4180>. You land on the public site — the
-noticeboard, the courses and the contact details. **Sign in** with
+Then go to <http://localhost:4180>. You land on the sign-in screen, the
+calligraphy loop running behind the brand panel. Sign in with
 `sarangerel@erachinese.mn` / `era2026pw` for the teacher's side, or **create an
-account** to come in as a new student.
+account** to come in as a new student. The links under the form open the rest of
+the school site — the noticeboard, the courses and the contact page.
 
 **To try a live lesson with both roles at once**, open the app in **two browser
 tabs**: sign in as `sarangerel@erachinese.mn` in one and `anujin@student.mn` in
@@ -127,17 +128,18 @@ records any student still unmarked as **absent** and closes the register.
 
 ## The public site
 
-Everything before an account exists lives at `#/p/...`. The noticeboard, the
-courses and the contact page are wrapped in a header and a footer; **signing in
-and joining keep the original split screen** — the calligraphy loop and the
-wordmark on the left, the form on the right:
+Everything before an account exists lives at `#/p/...`. **Signing in is what
+launches**, on the original split screen — the calligraphy loop and the wordmark
+on the left, the form on the right. The noticeboard, the courses and the contact
+page are wrapped in a header and a footer, and the links under the sign-in form
+lead to them:
 
 | Page | What a visitor gets |
 | --- | --- |
-| **News** `#/p/news` | The noticeboard — the landing page. Published notices only; drafts never leave the teacher's screen |
+| **Sign in** `#/p/login` | The landing page. Email and password, on the split screen |
+| **News** `#/p/news` | The noticeboard. Published notices only; drafts never leave the teacher's screen |
 | **Courses** `#/p/classes` | Every class actually running, with level, timetable, teacher, how many are studying, and the monthly fee |
 | **Contact** `#/p/contact` | Phone, email, address |
-| **Sign in** `#/p/login` | Email and password, on the split screen |
 | **Create an account** `#/p/join` | Opens a **student** account, same screen |
 
 The footer repeats the sales and support numbers, both email addresses, the
