@@ -101,17 +101,82 @@
     var page = App.route[0] === 'p' ? (App.route[1] || 'news') : 'news';
     if (PUB_PAGES.indexOf(page) === -1) page = 'news';
 
-    var body = page === 'login' ? loginPanel()
-             : page === 'join' ? joinPanel()
-             : page === 'classes' ? coursesPage()
+    /* Signing in and joining keep the split screen: the brand panel on the
+       left, the form on the right. The rest of the public site is a header,
+       a page and a footer. */
+    if (page === 'login' || page === 'join') return authScreen(page);
+
+    var body = page === 'classes' ? coursesPage()
              : page === 'contact' ? contactPage()
              : newsPage();
 
-    var narrow = page === 'login' || page === 'join';
     return '<div class="site">' +
         siteHeader(page) +
-        '<main class="site__main' + (narrow ? ' site__main--narrow' : '') + '">' + body + '</main>' +
+        '<main class="site__main">' + body + '</main>' +
         siteFooter() +
+      '</div>';
+  }
+
+  /* ── the split screen ──
+     The calligraphy loop runs behind a dark scrim on the left; the right side
+     is whichever door was asked for. The heading is the only place the words
+     "Sign in" appear on this screen. */
+  function authScreen(page) {
+    var zh = global.I18n.get() === 'zh';
+    var join = page === 'join';
+    return '<div class="login">' +
+        '<div class="login__brand">' +
+          '<video class="login__video" src="brand-loop.mp4" autoplay loop muted playsinline></video>' +
+          '<div class="login__logo"><div class="logo logo--lg">' +
+            '<b>ERA CHINESE.</b><span>你。让世界更美</span></div></div>' +
+          '<div class="login__foot">' +
+            (zh ? '<div class="login__pitch"><h1>' + T('Every lesson, register and mark in one place.') + '</h1></div>' : '') +
+            '<p class="login__slogan">“Сонирхогч бус Мэргэжлийн”</p>' +
+            '<div class="login__facts">' +
+              '<div><b>' + S.data.classes.length + '</b><span>' + T('Classes') + '</span></div>' +
+              '<div><b>' + S.activeStudents().length + '</b><span>' + T('Students') + '</span></div>' +
+              '<div><b>' + S.data.lessons.length + '</b><span>' + T('Lessons') + '</span></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="login__pick">' +
+          '<div class="login__mark">ERA CHINESE.</div>' +
+          '<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">' +
+            '<h2 style="font-size:23px;flex:1">' +
+              (join ? T('Create a student account') : T('Sign in')) + '</h2>' +
+            langPicker() + '</div>' +
+          '<p>' + (join
+            ? T('This opens a student account. Teacher and staff accounts are created by the school.')
+            : T('Staff and students use the same door — the account decides what opens.')) + '</p>' +
+
+          (App.authError
+            ? '<div class="auth__err">' + U.icon('alert', 15) + U.esc(T(App.authError)) + '</div>'
+            : '') +
+
+          (join
+            ? '<form class="auth__form" data-form="join">' +
+                field('name', 'Full name', 'text', 'user', 'name') +
+                field('email', 'Email', 'email', 'mail', 'username') +
+                field('password', 'Password', 'password', 'lock', 'new-password') +
+                field('confirm', 'Repeat password', 'password', 'lock', 'new-password') +
+                '<p class="tiny muted" style="margin:-2px 0 2px">' +
+                  T('At least 8 characters, with letters and numbers.') + '</p>' +
+                '<button class="btn btn--pri btn--wide" type="submit">' + T('Create an account') + '</button>' +
+              '</form>'
+            : '<form class="auth__form" data-form="login">' +
+                field('email', 'Email', 'email', 'mail', 'username') +
+                field('password', 'Password', 'password', 'lock', 'current-password') +
+                '<button class="btn btn--pri btn--wide" type="submit">' + T('Sign in') + '</button>' +
+              '</form>') +
+
+          '<div class="auth__foot">' +
+            (join
+              ? T('Already have one?') + ' <a href="#/p/login">' + T('Sign in') + '</a>'
+              : T('No account yet?') + ' <a href="#/p/join">' + T('Create a student account') + '</a>') +
+            '<div style="margin-top:10px"><a href="#/p/news">' + T('Back to the school site') + '</a></div>' +
+          '</div>' +
+        '</div>' +
       '</div>';
   }
 
@@ -247,53 +312,12 @@
      Sign-in takes an email and a password and says nothing about which of the
      two was wrong. Registration is students only: a teacher account reads the
      whole school, so those are created from inside by someone already holding
-     one. See auth.js for what client-side passwords are and are not worth. */
-  function authShell(title, sub, body, foot) {
-    return '<div class="auth">' +
-        '<h1>' + title + '</h1>' +
-        '<p class="auth__sub">' + sub + '</p>' +
-        (App.authError
-          ? '<div class="auth__err">' + U.icon('alert', 15) + U.esc(T(App.authError)) + '</div>'
-          : '') +
-        body +
-        '<div class="auth__foot">' + foot + '</div>' +
-      '</div>';
-  }
-
+     one. See auth.js for what client-side passwords are and are not worth.
+     Both are drawn by authScreen() above; this is the shared field. */
   function field(name, label, type, ic, auto) {
     return '<label class="field field--ic"><span>' + T(label) + '</span>' +
       '<span class="field__wrap">' + U.icon(ic, 16) +
         '<input name="' + name + '" type="' + type + '" autocomplete="' + (auto || 'off') + '"></span></label>';
-  }
-
-  function loginPanel() {
-    return authShell(
-      T('Sign in'),
-      T('Staff and students use the same door — the account decides what opens.'),
-      '<form class="auth__form" data-form="login">' +
-        field('email', 'Email', 'email', 'mail', 'username') +
-        field('password', 'Password', 'password', 'lock', 'current-password') +
-        '<button class="btn btn--pri btn--wide" type="submit">' + T('Sign in') + '</button>' +
-      '</form>',
-      T('No account yet?') + ' <a href="#/p/join">' + T('Create a student account') + '</a>'
-    );
-  }
-
-  function joinPanel() {
-    return authShell(
-      T('Create a student account'),
-      T('This opens a student account. Teacher and staff accounts are created by the school.'),
-      '<form class="auth__form" data-form="join">' +
-        field('name', 'Full name', 'text', 'user', 'name') +
-        field('email', 'Email', 'email', 'mail', 'username') +
-        field('password', 'Password', 'password', 'lock', 'new-password') +
-        field('confirm', 'Repeat password', 'password', 'lock', 'new-password') +
-        '<p class="tiny muted" style="margin:-2px 0 2px">' +
-          T('At least 8 characters, with letters and numbers.') + '</p>' +
-        '<button class="btn btn--pri btn--wide" type="submit">' + T('Create an account') + '</button>' +
-      '</form>',
-      T('Already have one?') + ' <a href="#/p/login">' + T('Sign in') + '</a>'
-    );
   }
 
   /* ── shell ────────────────────────────────────────────── */
@@ -356,6 +380,9 @@
       if (lastLive) { global.LiveView.unmount(); lastLive = null; }
       root.innerHTML = publicPage();
       document.body.classList.remove('nav-open');
+      /* the autoplay attribute alone is ignored in a few browsers — nudge it */
+      var clip = root.querySelector('.login__video');
+      if (clip) { var pl = clip.play(); if (pl && pl.catch) pl.catch(function () {}); }
       return;
     }
 
@@ -623,6 +650,13 @@
     global.addEventListener('hashchange', function () { App.authError = null; render(); });
     global.addEventListener('beforeunload', function () {
       if (lastLive) global.LiveView.unmount();
+    });
+
+    /* a page opened in a background tab never starts its autoplay clip */
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      var clip = document.querySelector('.login__video');
+      if (clip && clip.paused) { var p = clip.play(); if (p && p.catch) p.catch(function () {}); }
     });
 
     if ('speechSynthesis' in global) { try { global.speechSynthesis.getVoices(); } catch (e) {} }

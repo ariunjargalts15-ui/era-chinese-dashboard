@@ -127,16 +127,18 @@ records any student still unmarked as **absent** and closes the register.
 
 ## The public site
 
-Everything before an account exists lives at `#/p/...`, wrapped in a header and a
-footer so the school reads as a site rather than a login prompt:
+Everything before an account exists lives at `#/p/...`. The noticeboard, the
+courses and the contact page are wrapped in a header and a footer; **signing in
+and joining keep the original split screen** — the calligraphy loop and the
+wordmark on the left, the form on the right:
 
 | Page | What a visitor gets |
 | --- | --- |
 | **News** `#/p/news` | The noticeboard — the landing page. Published notices only; drafts never leave the teacher's screen |
 | **Courses** `#/p/classes` | Every class actually running, with level, timetable, teacher, how many are studying, and the monthly fee |
 | **Contact** `#/p/contact` | Phone, email, address |
-| **Sign in** `#/p/login` | Email and password |
-| **Create an account** `#/p/join` | Opens a **student** account |
+| **Sign in** `#/p/login` | Email and password, on the split screen |
+| **Create an account** `#/p/join` | Opens a **student** account, same screen |
 
 The footer repeats the sales and support numbers, both email addresses, the
 address, and links to Facebook and Instagram. All of it comes from
@@ -269,7 +271,8 @@ era-chinese-lite/
 ├── live.js       shared room state + the online classroom and its tools
 ├── teacher.js    teacher pages and actions
 ├── student.js    student pages and actions
-└── app.js        session, hash router, the public site, the shell, event delegation
+├── app.js        session, hash router, the public site, the shell, event delegation
+└── brand-loop.mp4  the calligraphy clip behind the sign-in panel (8 s, muted, 0.6 MB)
 ```
 
 ## The logo
@@ -281,6 +284,10 @@ lockup is a change in one CSS rule. The brand violet `#5227E0` from the logo is 
 action colour — buttons, active nav links, focus rings, chips, the reset link. Cinnabar
 `#C8443C` stays as `--red`, but only where red means something: live lessons, absences,
 overdue tuition, wrong quiz answers. The favicon is the wordmark on a violet tile.
+
+The sign-in screen loops `brand-loop.mp4` behind the brand panel under a dark scrim, so the
+headline and the "Сонирхогч бус Мэргэжлийн" line stay readable over any frame. Swap the file
+to change it — keep it muted and short and it autoplays on its own.
 
 State lives in three keys: `era-chinese-lite/v1` (the school),
 `era-chinese-lite/live` (open classrooms) and `era-chinese-lite/lang`, plus

@@ -181,6 +181,7 @@
       'Энэ нь сурагчийн бүртгэл үүсгэнэ. Багш, ажилтны бүртгэлийг сургууль үүсгэдэг.',
     'At least 8 characters, with letters and numbers.':
       'Хамгийн багадаа 8 тэмдэгт, үсэг болон тоо хосолсон байх.',
+    'Back to the school site': 'Сургуулийн хуудас руу буцах',
     'No account yet?': 'Бүртгэлгүй юу?', 'Already have one?': 'Бүртгэлтэй юу?',
     'Welcome to the school': 'Сургуульдаа тавтай морил',
 
@@ -514,6 +515,7 @@
     'This opens a student account. Teacher and staff accounts are created by the school.':
       '这里创建的是学生账号。教师与教职工账号由学校创建。',
     'At least 8 characters, with letters and numbers.': '至少 8 个字符，需包含字母和数字。',
+    'Back to the school site': '返回学校主页',
     'No account yet?': '还没有账号？', 'Already have one?': '已有账号？',
     'Welcome to the school': '欢迎加入',
 

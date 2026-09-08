@@ -41,9 +41,25 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
 ::-webkit-scrollbar-thumb { background:#DDD4C8; border-radius:8px; border:3px solid var(--paper); }
 ::-webkit-scrollbar-thumb:hover { background:#C9BEAF; }
 
-/* ══ WORDMARK & TABS ════════════════════════ */
-/* The sign-in screen these once dressed is now the public site at the
-   bottom of this file; the wordmark and the tab strip outlived it. */
+/* ══ LOGIN ══════════════════════════════════════════════ */
+.login { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
+.login__brand {
+  background:#241D1A;
+  color:#F6EFE4; padding:48px 52px; display:flex; flex-direction:column;
+  justify-content:space-between; position:relative; overflow:hidden;
+}
+/* the calligraphy loop sits behind everything, with a scrim so the copy reads */
+.login__video {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  pointer-events:none;
+}
+.login__brand::after {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(36,29,26,.42) 0%, rgba(36,29,26,.60) 42%, rgba(36,29,26,.94) 100%);
+}
+.login__logo { display:flex; align-items:center; position:relative; z-index:1; }
+
 /* ── the logo ── a heavy wordmark with the line hanging off its right edge,
    flush with the full stop. The negative margins cancel the trailing
    letter-space of the last glyph so both edges line up. */
@@ -53,15 +69,54 @@ svg:not([width]) { width:16px; height:16px; flex:0 0 auto; }
   display:block; margin-top:4px; font:500 15px/1.4 var(--serif);
   color:#E9B949; letter-spacing:.08em; margin-right:-.08em;
 }
-.nav__top .logo b { color:#FFFFFF; }
+.login__logo .logo b, .nav__top .logo b { color:#FFFFFF; }
 .logo--lg b { font-size:52px; }
 .logo--lg span { font-size:19px; margin-top:8px; letter-spacing:.12em; margin-right:-.12em; }
+.login__foot { position:relative; z-index:1; display:flex; flex-direction:column; gap:18px; }
+.login__pitch { max-width:26rem; }
+.login__pitch h1 { font-size:36px; line-height:1.18; text-shadow:0 2px 18px rgba(0,0,0,.45); }
+.login__slogan {
+  margin:0; font-style:italic; font-size:21px; font-weight:500; color:var(--gold-lt);
+  letter-spacing:.01em; text-shadow:0 2px 14px rgba(0,0,0,.5);
+}
+.login__facts { display:flex; gap:34px; padding-top:4px; }
+.login__facts div b { display:block; font:700 24px/1 var(--sans); color:var(--gold-lt); }
+.login__facts div span { font-size:12px; color:#CDBCA8; }
+
+.login__pick { padding:56px 52px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto; position:relative; }
+/* plain wordmark on the sign-in side */
+.login__mark {
+  position:absolute; top:26px; right:52px;
+  font:900 17px/1 var(--sans); letter-spacing:-.03em; margin-right:-.03em; color:var(--brand);
+}
+.login__pick > p { color:var(--ink-3); margin:6px 0 26px; }
 .roleTabs { display:flex; gap:8px; background:var(--line-2); padding:5px; border-radius:11px; margin-bottom:20px; }
 .roleTabs button {
   flex:1; border:0; background:transparent; padding:9px; border-radius:8px;
   font-weight:600; color:var(--ink-3); cursor:pointer; transition:.15s;
 }
 .roleTabs button.on { background:var(--card); color:var(--ink); box-shadow:var(--sh); }
+.accounts { display:flex; flex-direction:column; gap:8px; max-height:46vh; overflow:auto; padding-right:4px; }
+
+/* ── the public noticeboard on the sign-in side ── */
+.notices { display:flex; flex-direction:column; gap:10px; max-height:58vh; overflow:auto; padding-right:4px; }
+.notice {
+  padding:14px 16px; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r); border-left:3px solid var(--line);
+}
+.notice--pin { border-left-color:var(--gold); background:var(--card-2); }
+.notice__h { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.notice b { display:block; font-size:15px; line-height:1.3; }
+.notice p { margin:7px 0 0; color:var(--ink-3); font-size:13px; line-height:1.55; white-space:pre-wrap; }
+.notice .tiny.muted:last-child { margin-top:8px; }
+.acct {
+  display:flex; align-items:center; gap:13px; padding:11px 14px; cursor:pointer;
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  text-align:left; transition:.15s;
+}
+.acct:hover { border-color:var(--brand); box-shadow:var(--sh); transform:translateX(2px); }
+.acct b { display:block; font-weight:600; }
+.acct small { color:var(--ink-3); }
 
 /* ══ SHELL ══════════════════════════════════════════════ */
 .shell { display:flex; min-height:100vh; }
@@ -435,6 +490,12 @@ tbody tr:hover { background:var(--card-2); }
 /* ── responsive ─────────────────────────────────────────── */
 @media (max-width:1080px) { .g4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:900px) {
+  .login { grid-template-columns:1fr; }
+  .login__brand { padding:34px 26px; }
+  .login__brand::after { font-size:260px; right:-50px; bottom:-80px; }
+  .login__pitch h1 { font-size:27px; }
+  .login__pick { padding:34px 26px; }
+  .login__mark { top:16px; right:26px; }
   .g2,.g3,.g-2-1,.g-1-2,.liveGrid { grid-template-columns:minmax(0,1fr); }
   .boardCard__hz { font-size:60px; }
   .boardText { font-size:26px; }
@@ -501,7 +562,6 @@ tbody tr:hover { background:var(--card-2); }
 
 /* ── page body ── */
 .site__main { flex:1; width:100%; max-width:1180px; margin:0 auto; padding:38px 24px 64px; }
-.site__main--narrow { max-width:470px; padding-top:56px; }
 
 .site__hero { margin-bottom:26px; }
 .site__hero h1 { font-size:31px; letter-spacing:-.02em; margin:0; }
@@ -537,15 +597,10 @@ tbody tr:hover { background:var(--card-2); }
 .course__fee b { font-size:19px; color:var(--brand); }
 
 /* ── sign in / create an account ── */
-.auth {
-  background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg);
-  padding:34px 32px 28px;
-}
-.auth h1 { font-size:25px; margin:0; letter-spacing:-.01em; }
-.auth__sub { color:var(--ink-3); font-size:13.5px; margin:9px 0 22px; line-height:1.6; }
+/* the sign-in and join forms, inside the right half of the split screen */
 .auth__form { display:flex; flex-direction:column; gap:15px; }
 .auth__err {
-  display:flex; align-items:center; gap:9px; margin-bottom:18px;
+  display:flex; align-items:center; gap:9px; margin:0 0 18px;
   padding:11px 14px; border-radius:var(--r-sm); font-size:13px; font-weight:600;
   background:#FDF0EF; border:1px solid #F0C9C6; color:#A3302A;
 }
