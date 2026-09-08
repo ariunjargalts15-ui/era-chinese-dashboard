@@ -254,6 +254,9 @@
       '{name}-н {month}-н нэхэмжлэх төлөгдөөгүй болж буцна.',
     'What was recorded — {money}{method}{date} — is discarded and cannot be brought back.':
       'Бүртгэсэн зүйл — {money}{method}{date} — устах бөгөөд сэргээх боломжгүй.',
+    'Opening the school…': 'Сургуулийг нээж байна…',
+    'Check your email to confirm your account': 'Бүртгэлээ баталгаажуулах и-мэйлээ шалгана уу',
+    'Something went wrong': 'Алдаа гарлаа',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -636,6 +639,9 @@
     'The {month} invoice for {name} goes back to unpaid.': '{name} 的 {month} 账单将恢复为未缴。',
     'What was recorded — {money}{method}{date} — is discarded and cannot be brought back.':
       '已登记的内容 —— {money}{method}{date} —— 将被删除且无法恢复。',
+    'Opening the school…': '正在打开学校…',
+    'Check your email to confirm your account': '请查收邮件以确认你的账号',
+    'Something went wrong': '出错了',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',

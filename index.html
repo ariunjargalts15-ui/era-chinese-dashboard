@@ -15,10 +15,15 @@
   <div id="modal-root"></div>
   <div id="toast-root"></div>
 
+  <!-- the school's home: empty config.js = this browser only -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
   <script src="i18n.js"></script>
   <!-- auth first: store.js hashes passwords during migrate() -->
   <script src="auth.js"></script>
   <script src="store.js"></script>
+  <script src="db.js"></script>
+  <script src="cloud.js"></script>
   <script src="ui.js"></script>
   <script src="live.js"></script>
   <script src="teacher.js"></script>

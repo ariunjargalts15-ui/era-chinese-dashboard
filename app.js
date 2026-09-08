@@ -310,6 +310,12 @@
         '<input name="' + name + '" type="' + type + '" autocomplete="' + (auto || 'off') + '"></span></label>';
   }
 
+  function splash() {
+    return '<div class="splash">' +
+      '<div class="logo logo--lg"><b>ERA CHINESE.</b><span>你。让世界更美</span></div>' +
+      '<p>' + T('Opening the school…') + '</p></div>';
+  }
+
   /* ── shell ────────────────────────────────────────────── */
   function shell(title, cn, body) {
     var me = S.user(App.session.userId);
@@ -360,6 +366,9 @@
   function render(force) {
     var root = document.getElementById('app');
     App.route = parseHash();
+
+    /* fetching the school; a flash of the sign-in form would be a lie */
+    if (App.booting) { root.innerHTML = splash(); return; }
 
     /* signed out: the public site, whatever the hash says */
     if (!App.session) {
@@ -490,22 +499,110 @@
       U.toast(T('Signed in as {name}', { name: u.name }), 'check');
     }
 
+    /* Both doors work the same way from here whether the school is in this
+       browser or in Supabase; only who checks the password differs. The forms
+       are disabled while the answer is on its way, since a second press would
+       otherwise fire a second sign-in. */
+    function busy(on) {
+      App.authBusy = on;
+      var btn = document.querySelector('.auth__form button[type="submit"]');
+      if (btn) btn.disabled = on;
+    }
+
+    /* The local school answers straight away and stays synchronous — going
+       through a promise for it would only invent a window where the form is
+       submitted twice. Only the cloud path waits. */
     A.doLogin = function (form) {
-      var r = S.signIn(val(form, 'email'), val(form, 'password'));
-      if (r.error) { App.authError = r.error; render(); return; }
-      enter(r.user);
+      if (App.authBusy) return;
+      var email = val(form, 'email'), password = val(form, 'password');
+
+      if (!(global.Cloud && global.Cloud.client)) {
+        var local = S.signIn(email, password);
+        if (local.error) { App.authError = local.error; render(); return; }
+        enter(local.user);
+        return;
+      }
+
+      busy(true);
+      global.Cloud.signIn(email, password).then(function (r) {
+        if (r.error) return r;
+        return startCloudSession();
+      }).then(function (r) {
+        busy(false);
+        if (r.error) { App.authError = r.error; render(); return; }
+        enter(r.user);
+      }).catch(function (e) {
+        busy(false);
+        App.authError = (e && e.message) || 'Wrong email or password';
+        render();
+      });
     };
 
     A.doJoin = function (form) {
-      var r = S.registerStudent({
+      if (App.authBusy) return;
+      var data = {
         name: val(form, 'name'), email: val(form, 'email'),
         password: val(form, 'password'), confirm: val(form, 'confirm'),
         wantsClassId: val(form, 'wantsClassId')
+      };
+
+      if (!(global.Cloud && global.Cloud.client)) {
+        var local = S.registerStudent(data);
+        if (local.error) { App.authError = local.error; render(); return; }
+        enter(local.user);
+        U.toast(T('Welcome to the school'), 'grad');
+        return;
+      }
+
+      busy(true);
+      global.Cloud.register(data).then(function (r) {
+        if (r.error || r.confirm) return r;
+        return startCloudSession();
+      }).then(function (r) {
+        busy(false);
+        if (r.error) { App.authError = r.error; render(); return; }
+        if (r.confirm) {
+          /* email confirmation is on: there is no session until they click
+             the link, so do not drop them on a form that cannot work yet */
+          App.authError = null;
+          U.toast(T('Check your email to confirm your account'), 'mail');
+          App.go('#/p/login');
+          return;
+        }
+        enter(r.user);
+        U.toast(T('Welcome to the school'), 'grad');
+      }).catch(function (e) {
+        busy(false);
+        App.authError = (e && e.message) || 'Something went wrong';
+        render();
       });
-      if (r.error) { App.authError = r.error; render(); return; }
-      enter(r.user);
-      U.toast(T('Welcome to the school'), 'grad');
     };
+
+    /* Signed in against Supabase: pull the school down, start listening for
+       what other devices do, and work out who this session belongs to. */
+    function startCloudSession() {
+      return global.Cloud.hydrate().then(function (data) {
+        S.adopt(data);
+        return global.Cloud.session();
+      }).then(function (sess) {
+        var uid = sess && sess.user && sess.user.id;
+        var me = uid && S.user(uid);
+        if (!me) {
+          /* The account exists but its profile row has not arrived — the
+             trigger runs on the server and realtime may beat the read. */
+          return global.Cloud.hydrate().then(function (d2) {
+            S.adopt(d2);
+            var again = uid && S.user(uid);
+            return again ? { user: again } : { error: 'Wrong email or password' };
+          });
+        }
+        global.Cloud.watch(function () {
+          global.Cloud.hydrate().then(function (fresh) { S.refresh(fresh); });
+        });
+        return { user: me };
+      });
+    }
+    App.startCloudSession = startCloudSession;
     /* Seeded accounts all start on the same password, so changing it has to be
        reachable from anywhere — it sits under the account in the sidebar. */
     A.changePassword = function () {
@@ -522,11 +619,22 @@
         okText: T('Change password'),
         onOk: function () {
           var me = S.user(App.session.userId);
-          if (!global.Auth.verify(me, U.Modal.val('cur'))) {
+          /* In cloud mode the password is not in the browser to check against;
+             Supabase requires a live session to change it, which is the same
+             guarantee by a different route. */
+          if (!(global.Cloud && global.Cloud.client) &&
+              !global.Auth.verify(me, U.Modal.val('cur'))) {
             U.toast(T('Current password is wrong'), 'alert'); return;
           }
           if (U.Modal.val('pw') !== U.Modal.val('pw2')) {
             U.toast(T('The two passwords do not match'), 'alert'); return;
+          }
+          if (global.Cloud && global.Cloud.client) {
+            global.Cloud.changePassword(U.Modal.val('pw')).then(function (r) {
+              if (r.error) { U.toast(T(r.error), 'alert'); return; }
+              U.Modal.close(); U.toast(T('Password changed'), 'check');
+            });
+            return;
           }
           var r = S.setPassword(me.id, U.Modal.val('pw'));
           if (r.error) { U.toast(T(r.error), 'alert'); return; }
@@ -536,6 +644,7 @@
     };
 
     A.logout = function () {
+      if (global.Cloud && global.Cloud.client) { global.Cloud.signOut(); }
       if (lastLive) { global.LiveView.unmount(); lastLive = null; }
       App.session = null; App.filters = {}; App.flash = null;
       saveSession();
@@ -625,7 +734,34 @@
       if (App.session) render();
     });
 
-    App.session = loadSession();
+    /* ── which school is this ──
+       Unconfigured, the app is what it always was: this browser's copy, a
+       session per tab. Configured, the session belongs to the browser and
+       comes from Supabase, and the school is fetched before the first paint
+       so nobody sees an empty dashboard that then fills in. */
+    var cloud = global.Cloud && global.Cloud.init();
+    if (!cloud) {
+      App.session = loadSession();
+    } else {
+      App.session = null;
+      App.booting = true;
+      global.Cloud.session().then(function (sess) {
+        if (!sess) return null;
+        return App.startCloudSession().then(function (r) {
+          if (r && r.user) {
+            App.session = { userId: r.user.id, role: r.user.role };
+            saveSession();
+          }
+        });
+      }).catch(function (e) {
+        if (global.console) console.error('could not reach the school:', e && e.message);
+        App.cloudError = true;
+      }).then(function () {
+        App.booting = false;
+        if (App.session && !location.hash) location.hash = homeHash();
+        else render(true);
+      });
+    }
 
     document.addEventListener('click', onClick);
     document.addEventListener('submit', onSubmit);
@@ -646,6 +782,7 @@
 
     if ('speechSynthesis' in global) { try { global.speechSynthesis.getVoices(); } catch (e) {} }
 
+    if (App.booting) return;                 /* the cloud path paints when ready */
     if (App.session && !location.hash) location.hash = homeHash();
     else render();
   }

@@ -126,6 +126,45 @@
     return out;
   }
 
+  /* ── where the school is kept ──
+     Nothing above or below cares. Views read Store.data, mutations change it
+     and call save(), and this decides whether that means a line in
+     localStorage or a handful of rows in Postgres.
+
+     synced is the last copy the database is known to hold. save() hands both
+     to db.js, which works out the difference — so a save writes the mark that
+     changed rather than the whole school, and two teachers working at once
+     edit different rows instead of overwriting each other. */
+  var synced = null;
+  var pushTimer = null;
+  var pushing = false;
+  var pushAgain = false;
+
+  function queuePush(store) {
+    if (pushTimer) return;
+    /* a coalescing window: one press can move a dozen rows */
+    pushTimer = setTimeout(function () { pushTimer = null; flush(store); }, 150);
+  }
+
+  function flush(store) {
+    if (pushing) { pushAgain = true; return; }
+    pushing = true;
+    var attempt = JSON.parse(JSON.stringify(store.data));
+    global.DB.push(synced, attempt).then(function () {
+      synced = attempt;
+    }).catch(function (err) {
+      /* The write failed — a dropped connection, or a row the signed-in
+         person is not allowed to touch. synced is left alone on purpose, so
+         the next save retries the same difference rather than treating it as
+         already saved. */
+      if (global.console) console.error('sync failed:', err && err.message);
+      if (store.onSyncError) store.onSyncError(err);
+    }).then(function () {
+      pushing = false;
+      if (pushAgain) { pushAgain = false; queuePush(store); }
+    });
+  }
+
   /* ── the school's own details ──
      Shown in the public header and footer, and on the contact page. These are
      placeholders: replace them with the school's real phone, email, address
@@ -380,6 +419,31 @@
   var Store = {
     data: null,
 
+    /* set once at boot, before anything reads the school */
+    remote: false,
+
+    /* Hand the store the school the database returned. From here on save()
+       writes rows, and what is in memory is what the database holds. */
+    adopt: function (data) {
+      this.data = migrate(data);
+      synced = JSON.parse(JSON.stringify(this.data));
+      this.remote = true;
+      notify();
+      return this.data;
+    },
+
+    /* Another device changed something. Take their version wholesale — it is
+       the database's, which is the one that counts — and redraw. */
+    refresh: function (data) {
+      this.data = migrate(data);
+      synced = JSON.parse(JSON.stringify(this.data));
+      notify();
+      return this.data;
+    },
+
+    /* true while a write is still on its way, so the UI can say so */
+    saving: function () { return pushing || !!pushTimer; },
+
     load: function () {
       var raw = null;
       try { raw = localStorage.getItem(KEY); } catch (e) { /* private mode */ }
@@ -400,6 +464,7 @@
     },
 
     save: function () {
+      if (this.remote) { queuePush(this); return; }
       try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* quota / private mode */ }
       if (CH) { try { CH.postMessage({ t: 'sync', at: Date.now() }); } catch (e) {} }
     },

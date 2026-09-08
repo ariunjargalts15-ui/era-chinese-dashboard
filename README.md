@@ -316,7 +316,11 @@ era-chinese-lite/
 ├── index.html    loads the eight scripts and the stylesheet
 ├── app.css       design system — brand violet, gold 金, ink 墨, rice paper 宣纸
 ├── i18n.js       English / Монгол / 中文 dictionaries, calendars and T()
-├── auth.js       salted SHA-256 passwords and what they are worth without a server
+├── config.js     which of the two homes the school uses
+├── auth.js       salted SHA-256 passwords, for the browser-only mode
+├── db.js         the app's shape as tables: hydrate, diff, push, subscribe
+├── cloud.js      Supabase sign-in, registration and live updates
+├── supabase/schema.sql   the tables, the row-level security, the sign-up trigger
 ├── store.js      data model, seed school, lookups, localStorage persistence
 ├── ui.js         icons, formatting, avatars, tags, modal, toast, charts, speech
 ├── live.js       shared room state + the online classroom and its tools
@@ -378,32 +382,74 @@ school's real phone, email and address into `defaultSchool()` in
 > **The classes and lessons are still placeholders.** They are there so the app
 > is not empty on first sight. Delete them and make your own.
 
-## Where the data actually lives
+## Where the data lives
 
-**In the browser, and nowhere else.** Everything — accounts, students,
-registers, grades, invoices, notices — is one JSON blob in `localStorage`
-under `era-chinese-lite/v1`, in whichever browser it was typed into.
+Two modes, decided by [config.js](config.js).
 
-Deploying to Vercel does not change this. Vercel serves the HTML, CSS and JS as
-static files; there is no database and no server-side code, so:
+**Empty config — this browser only.** Everything sits in `localStorage` under
+`era-chinese-lite/v1`. Fine for trying it out. Each device is a separate school:
+a student who registers on their phone does not exist for the teacher, and
+clearing site data loses everything with no backup.
 
-| | |
-| --- | --- |
-| A student registers on their phone | That account exists **only on their phone**. The teacher never sees it |
-| The teacher marks a register | It is saved **only in the teacher's browser** |
-| The teacher opens the site on a second computer | An empty school — nothing carries across |
-| Someone clears their browser data | **Everything is gone. There is no backup** |
-| Two teachers both use it | Two separate schools that never meet |
+**Configured — one school, every device.** The school moves to Supabase:
+one Postgres database, sign-in handled by the server, and every device seeing
+the same records.
 
-The cross-tab sync in `live.js` works between **tabs of the same browser on the
-same machine** — that is `BroadcastChannel` and a shared `localStorage` key, not
-a network.
+### Setting it up
 
-So this is complete and usable as a **single-machine** record book. It is not
-yet a system a school can run on. Making it one means adding a backend and
-moving three things to it: the accounts and passwords, the school data, and the
-live-lesson state. Supabase or Firebase both drop into a static Vercel site
-without a build step, which is the shortest path from here.
+1. Make a free project at [supabase.com](https://supabase.com).
+2. SQL editor → run [supabase/schema.sql](supabase/schema.sql).
+3. Settings → API → copy the **Project URL** and the **anon public** key into
+   `config.js`, commit, and redeploy.
+4. Authentication → Providers → Email. Turn **Confirm email** off to let people
+   in straight away, or leave it on and they get a link first — the app handles
+   both.
+5. Sign up once on the public site, then in the SQL editor promote yourself:
+   `update profiles set role = 'teacher' where email = 'you@example.com';`
+   Every other staff account is made from inside, under *Students → Add a
+   teacher*.
+
+The anon key belongs in the browser — it is public by design and names the
+project, not a person. What keeps one student out of another's grades is the
+row-level security in the schema, not the secrecy of that key. The
+`service_role` key must never go near this repo.
+
+### What the database will and will not hand over
+
+Every table has row-level security, and it is the point of the whole exercise:
+
+| | Teacher | Student |
+| --- | --- | --- |
+| Profiles | everyone | themselves, plus teachers' names |
+| Classes, lessons | all | only the ones they are in |
+| Registers, grades, skills | all | **only their own** |
+| Invoices | all | **only their own** |
+| Enrolments | all | their own — a class roster is not a student's business |
+| Notices | drafts too | published only |
+| Homework | read and mark | hand in their own; a trigger stops them writing their own grade |
+| Role | may set it | **cannot** — the sign-up trigger writes `student`, not the browser |
+
+A student cannot promote themselves to staff by editing the page, the request,
+or the database call. The server decides.
+
+### How it stays in sync
+
+The app still reads one object in memory, exactly as it always did — rewriting
+every view to await a query would have been a rewrite of the app for no gain.
+[db.js](db.js) keeps that object the same everywhere:
+
+- **hydrate** fills it at sign-in from every table the viewer is allowed to read.
+- **push** compares it to the last synced copy and writes **only the rows that
+  changed**. `Store.save()` does not know what it changed, so the diff works it
+  out. Marking one student writes one row — which is also why two teachers
+  working at once edit different rows instead of the last one to save
+  overwriting the school.
+- **subscribe** listens for what other devices do and re-reads. Realtime obeys
+  the same policies, so a student is only ever sent their own rows.
+
+If a write fails — connection dropped, or a row the signed-in person may not
+touch — the last-synced copy is deliberately left alone, so the next save
+retries that same difference rather than treating it as saved.
 
 ## Adding to it
 
