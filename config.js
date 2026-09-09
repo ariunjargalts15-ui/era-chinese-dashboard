@@ -18,6 +18,6 @@
    the row-level security in schema.sql, not the secrecy of this key. Never put
    the service_role key here: it bypasses all of it. */
 window.CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: ''
+supabaseUrl: 'https://igghtboymyexrwclytws.supabase.co',
+  supabaseAnonKey: 'sb_publishable_Hl-7jMlrSiVeO6TXaODamg_wpMir0QP'
 };
