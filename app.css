@@ -763,3 +763,5 @@ textarea.mono { font-family:ui-monospace, 'Cascadia Mono', Consolas, monospace; 
   .pathRow--left, .pathRow--mid, .pathRow--right { padding:0; }
   .round__hz { font-size:44px; }
 }
+
+.auth__ok { background:var(--jade-sf); border-color:#BFE0D4; color:#1F5A48; }

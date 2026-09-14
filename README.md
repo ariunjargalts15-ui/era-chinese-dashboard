@@ -478,10 +478,26 @@ the same records.
 4. Authentication → Providers → Email. Turn **Confirm email** off to let people
    in straight away, or leave it on and they get a link first — the app handles
    both.
+   Keeping it **on** is safer; note that Supabase's built-in mailer sends only a
+   few emails an hour, so a school registering many students at once should add
+   its own SMTP under Authentication → Emails. Also set **Site URL** under
+   Authentication → URL Configuration to the Vercel address, or the
+   confirmation link points at localhost.
 5. Sign up once on the public site, then in the SQL editor promote yourself:
    `update profiles set role = 'teacher' where email = 'you@example.com';`
-   Every other staff account is made from inside, under *Students → Add a
-   teacher*.
+   After that, staff are promoted from inside: the new teacher registers like
+   anyone else, and *Students → Add a teacher* picks them. An invitation can
+   never grant staff — whoever registers an address first would get it.
+
+**Adding people in cloud mode.** A browser cannot create a login for somebody
+else (that needs the service key). *New student* therefore saves an
+**invitation** — name and the class they are joining. When that person
+registers with the address, they get the name and the class request, and land
+under *Needs a class*. Pending invitations are listed on *Students*.
+
+**Re-run `schema.sql` after every update.** A table the project does not have
+yet no longer stops anyone signing in — that feature reads as empty and its
+writes are skipped, with a warning in the console and on the course editor.
 
 The anon key belongs in the browser — it is public by design and names the
 project, not a person. What keeps one student out of another's grades is the

@@ -175,8 +175,10 @@ create table if not exists public.decks (
 -- Registration goes through Supabase Auth, and this is what gives the new
 -- account its profile. It always writes role 'student': role is never taken
 -- from anything the browser sent, so nobody can sign themselves up as staff.
--- The one exception is an invite the school created, which may name a role —
--- that row can only have been written by a teacher.
+-- An invite only fills in the name and the class asked for. It cannot grant
+-- staff: whoever registers an address first gets its invite, and without a
+-- confirmed email that need not be the person it was meant for. Teachers are
+-- promoted from inside by another teacher, once the account exists.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -191,7 +193,7 @@ begin
   insert into public.profiles (id, role, name, cn, email, title, wants_class_id)
   values (
     new.id,
-    coalesce(inv.role, 'student'),
+    'student',  -- never from the invite: staff are promoted by staff, after they sign up
     coalesce(nullif(inv.name, ''), new.raw_user_meta_data->>'name', ''),
     coalesce(inv.cn, ''),
     new.email,

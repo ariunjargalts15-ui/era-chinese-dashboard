@@ -468,6 +468,7 @@
     if (!d.course) d.course = starterCourse();
     if (!d.learn) d.learn = [];
     if (!d.learners) d.learners = [];
+    if (!d.invites) d.invites = [];
     dropDemoUsers(d);
     return d;
   }
@@ -475,6 +476,64 @@
   /* ── public store ─────────────────────────────────────── */
   var Store = {
     data: null,
+
+    /* ── invitations (cloud mode) ──
+       A person the school has entered who has not signed up yet. They are not
+       a profile — a profile needs a login behind it — so they cannot be put
+       in a class or billed until they register; the class chosen here is kept
+       as their request and pre-picked when a teacher places them. */
+    invites: function () { return (this.data.invites || []).slice(); },
+    addInvite: function (inv) {
+      this.data.invites = this.data.invites || [];
+      var email = String(inv.email).toLowerCase();
+      if (this.data.invites.some(function (x) { return String(x.email).toLowerCase() === email; })) {
+        return { error: 'That email has already been invited' };
+      }
+      var row = { email: email, name: inv.name, cn: inv.cn || '', role: inv.role || 'student',
+                  title: inv.title || '', wantsClassId: inv.wantsClassId || null };
+      this.data.invites.push(row);
+      this.save();
+      return { invite: row };
+    },
+    deleteInvite: function (email) {
+      var e = String(email || '').toLowerCase();
+      this.data.invites = (this.data.invites || []).filter(function (x) {
+        return String(x.email).toLowerCase() !== e;
+      });
+      this.save();
+    },
+
+    /* Push whatever is still waiting, now. Signing out calls this first so
+       the last change a teacher made is not dropped with the session. */
+    flushNow: function () {
+      var self = this;
+      if (!this.remote) return Promise.resolve();
+      if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+      return new Promise(function (resolve) {
+        var tries = 0;
+        (function wait() {
+          if (!pushing) {
+            var attempt = JSON.parse(JSON.stringify(self.data));
+            return global.DB.push(synced, attempt)
+              .then(function () { synced = attempt; }, function () {})
+              .then(resolve);
+          }
+          if (tries++ > 40) return resolve();
+          setTimeout(wait, 50);
+        })();
+      });
+    },
+
+    /* After signing out of the cloud, this browser should not keep holding
+       the school's registers and invoices in memory for the next person at
+       the keyboard. Back to the local copy. */
+    detach: function () {
+      this.remote = false;
+      synced = null;
+      this.data = null;
+      this.load();
+      notify();
+    },
 
     /* set once at boot, before anything reads the school */
     remote: false,

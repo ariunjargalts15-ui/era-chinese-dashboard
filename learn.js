@@ -436,7 +436,14 @@
     g();
     var list = S.course();
     var students = S.activeStudents().length;
-    return '<div class="sect">' +
+    /* the database this school runs on does not have the course tables yet:
+       anything edited here would be skipped on save, so say so up front */
+    var notReady = global.DB && global.DB.missing && global.DB.missing.course_units && S.remote;
+    return (notReady
+        ? '<div class="auth__err" style="margin-bottom:14px">' + U.icon('alert', 15) +
+            T('The school database is missing the course tables. Run supabase/schema.sql again in Supabase, then reload.') + '</div>'
+        : '') +
+      '<div class="sect">' +
         '<p class="muted" style="margin:0;flex:1;min-width:240px">' +
           T('Students work through these units in order. Exercises are built from each unit’s words.') + '</p>' +
         (list.length ? '' : '<button class="btn" data-act="courseStarter">' + U.icon('sparkles') + T('Load the starter course') + '</button>') +

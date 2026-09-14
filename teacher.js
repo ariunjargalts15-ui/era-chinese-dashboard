@@ -491,6 +491,7 @@
             '</div></div>'
         : '') +
 
+      pendingInvites() +
       '<div class="card"><div class="card__h"><h3>' +
         (f === 'waiting' ? T('Waiting for a class') : T('Students')) + '</h3>' +
         U.gloss('学生') + '<span class="sp"></span>' +
@@ -510,6 +511,20 @@
           : f === 'graduated' ? T('Finished students are kept here with their whole record.')
           : T('Create a student, or wait for someone to sign up on the school site.'))) +
       '</div>';
+  }
+
+  function pendingInvites() {
+    var list = S.invites ? S.invites() : [];
+    if (!list.length) return '';
+    return '<div class="card" style="margin-bottom:14px"><div class="card__h"><h3>' + T('Invited, not signed up yet') + '</h3>' +
+      '<span class="sp"></span><span class="tag">' + list.length + '</span></div><div class="list">' +
+      list.map(function (i) {
+        var k = i.wantsClassId && S.klass(i.wantsClassId);
+        return '<div class="row"><div class="av av--sm" style="background:var(--slate)">' + U.icon('mail', 14) + '</div>' +
+          '<div class="row__m"><b>' + U.esc(i.name) + '</b><small>' + U.esc(i.email) + ' · ' +
+            (i.role === 'teacher' ? T('Teacher') : T('Student')) + (k ? ' · ' + U.esc(k.name) : '') + '</small></div>' +
+          '<button class="btn btn--sm" data-act="cancelInvite" data-v="' + U.esc(i.email) + '">' + U.icon('x', 14) + '</button></div>';
+      }).join('') + '</div></div>';
   }
 
   function studentRow(r) {
@@ -930,6 +945,9 @@
               }).join('') + '</div>'
               : '<p class="tiny muted" style="margin:0">' + T('Everybody is already in this class.') + '</p>') +
             '</div>' +
+            (cloud() ? '<p class="tiny muted" style="margin:10px 0">' +
+                T('Someone new? Invite them under Students \u2192 New student; they appear here once they sign up.') + '</p>' : '') +
+            (cloud() ? '' :
             '<div class="toolSep"></div>' +
             '<div class="tiny muted" style="font-weight:600;margin-bottom:8px">' + T('OR CREATE A NEW ONE') + '</div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
@@ -941,7 +959,7 @@
                 '<input name="newPassword" type="text" autocomplete="off"></label></div>' +
             '<p class="tiny muted" style="margin:-4px 0 10px">' +
               T('At least 8 characters, with letters and numbers.') + ' ' +
-              T('They sign in with this email and password. Ask them to change it.') + '</p>' +
+              T('They sign in with this email and password. Ask them to change it.') + '</p>') +
             '<div class="toolSep"></div>' +
             billOnEnrol(c),
       okText: T('Enrol'),
@@ -998,7 +1016,86 @@
   /* Most students open their own account on the public site. This is the other
      way in, for someone enrolled at the desk — so it has to set a password too,
      or the account it makes could never be signed into. */
+  function cloud() { return !!(global.Cloud && global.Cloud.client); }
+
+  /* In the shared school a login can only be made by the person it belongs to
+     — creating one for somebody else needs a server key that must never sit in
+     a browser. So a teacher leaves an invitation instead: name, role and the
+     class they are meant for. When that person registers with the address,
+     the trigger in schema.sql gives them all of it. */
+  function inviteModal(role) {
+    var t = me();
+    var teacher = role === 'teacher';
+    U.Modal.open({
+      title: teacher ? T('Invite a teacher') : T('Invite a student'), cn: teacher ? '邀请教师' : '邀请学生',
+      body: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+              '<label class="field"><span>' + T('Name') + '</span><input name="name" placeholder="' + T('Full name') + '"></label>' +
+              '<label class="field"><span>' + T('Chinese name') + '</span><input name="cn" placeholder="中文名"></label></div>' +
+            '<label class="field"><span>' + T('Email') + '</span><input name="email" type="email" placeholder="name@example.mn"></label>' +
+            (teacher
+              ? '<label class="field"><span>' + T('Job title') + '</span><input name="title" placeholder="' + T('Instructor') + '"></label>'
+              : '<label class="field"><span>' + T('Class they are joining') + '</span><select name="classId">' +
+                  '<option value="">' + T('None for now') + '</option>' + classOptions('', t.id) + '</select></label>') +
+            '<p class="tiny muted" style="margin:0">' +
+              T('They register on the school site with this email and choose their own password. Their name and role are filled in for them.') +
+            '</p>',
+      okText: T('Save invitation'),
+      onOk: function () {
+        var r = global.Cloud.invite({
+          name: U.Modal.val('name'), cn: U.Modal.val('cn'), email: U.Modal.val('email'),
+          role: role, title: U.Modal.val('title'), wantsClassId: U.Modal.val('classId')
+        });
+        if (r.error) { U.toast(T(r.error), 'alert'); return; }
+        U.Modal.close(); App.render();
+        U.toast(T('Invitation saved for {email}', { email: r.invite.email }), 'mail');
+      }
+    });
+  }
+
+  /* Staff in the shared school: the person registers like anyone else, and a
+     teacher already inside promotes them. That is the only road to staff, so
+     knowing somebody's email address is never enough to become them. */
+  function promoteModal() {
+    var people = S.students().filter(function (u) { return !S.isGraduated(u); });
+    U.Modal.open({
+      title: T('Add a teacher'), cn: '添加教师',
+      body: '<p style="margin:0 0 12px">' +
+          T('The new teacher first registers on the school site like anyone else. Then pick them here.') + '</p>' +
+        (people.length
+          ? '<label class="field"><span>' + T('Registered person') + '</span><select name="who">' +
+              people.map(function (u) {
+                return '<option value="' + u.id + '">' + U.esc(u.name) + ' · ' + U.esc(u.email) + '</option>';
+              }).join('') + '</select></label>' +
+            '<label class="field"><span>' + T('Job title') + '</span><input name="title" placeholder="' + T('Instructor') + '"></label>' +
+            '<p class="tiny muted" style="margin:0">' + T('A teacher sees every class, register, grade and invoice in the school.') + '</p>'
+          : '<p class="tiny muted" style="margin:0">' + T('Nobody has registered yet.') + '</p>'),
+      okText: T('Make teacher'),
+      onOk: function () {
+        if (!people.length) { U.Modal.close(); return; }
+        var u = S.user(U.Modal.val('who'));
+        if (!u) return;
+        u.role = 'teacher';
+        u.title = U.Modal.val('title') || u.title || '';
+        delete u.wantsClassId;
+        S.save();
+        U.Modal.close(); App.render();
+        U.toast(T('{name} is now a teacher', { name: u.name }), 'users');
+      }
+    });
+  }
+
+  A.cancelInvite = function (e) {
+    var email = e.getAttribute('data-v');
+    U.Modal.open({
+      title: T('Cancel invitation'),
+      body: '<p style="margin:0">' + T('{email} will no longer be recognised when they sign up.', { email: '<b>' + U.esc(email) + '</b>' }) + '</p>',
+      okText: T('Cancel invitation'),
+      onOk: function () { S.deleteInvite(email); U.Modal.close(); App.render(); }
+    });
+  };
+
   A.newStudent = function () {
+    if (cloud()) { inviteModal('student'); return; }
     var t = me();
     U.Modal.open({
       title: T('New student'), cn: '新学生',
@@ -1041,6 +1138,7 @@
      register, grade and invoice in the school, so it is never something a
      stranger can hand themselves on the public site. */
   A.newTeacher = function () {
+    if (cloud()) { promoteModal(); return; }
     U.Modal.open({
       title: T('Add a teacher'), cn: '添加教师',
       body: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +

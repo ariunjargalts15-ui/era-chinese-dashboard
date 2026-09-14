@@ -134,11 +134,12 @@
           '<div class="login__foot">' +
             (zh ? '<div class="login__pitch"><h1>' + T('Every lesson, register and mark in one place.') + '</h1></div>' : '') +
             '<p class="login__slogan">“Сонирхогч бус Мэргэжлийн”</p>' +
+            (global.Cloud && global.Cloud.client ? '' :
             '<div class="login__facts">' +
               '<div><b>' + S.data.classes.length + '</b><span>' + T('Classes') + '</span></div>' +
               '<div><b>' + S.activeStudents().length + '</b><span>' + T('Students') + '</span></div>' +
               '<div><b>' + S.data.lessons.length + '</b><span>' + T('Lessons') + '</span></div>' +
-            '</div>' +
+            '</div>') +
           '</div>' +
         '</div>' +
 
@@ -154,7 +155,9 @@
 
           (App.authError
             ? '<div class="auth__err">' + U.icon('alert', 15) + U.esc(T(App.authError)) + '</div>'
-            : '') +
+            : App.authNotice
+              ? '<div class="auth__err auth__ok">' + U.icon('mail', 15) + U.esc(App.authNotice) + '</div>'
+              : '') +
 
           (join
             ? '<form class="auth__form" data-form="join">' +
@@ -163,7 +166,7 @@
                 field('password', 'Password', 'password', 'lock', 'new-password') +
                 field('confirm', 'Repeat password', 'password', 'lock', 'new-password') +
                 /* a request, not an enrolment — the school still places them */
-                (S.data.classes.length
+                (!(global.Cloud && global.Cloud.client) && S.data.classes.length
                   ? '<label class="field"><span>' + T('Which course interests you?') + '</span>' +
                       '<select name="wantsClassId">' +
                         '<option value="">' + T('Not sure yet') + '</option>' +
@@ -176,7 +179,7 @@
                   : '') +
                 '<p class="tiny muted" style="margin:-2px 0 2px">' +
                   T('At least 8 characters, with letters and numbers.') +
-                  (S.data.classes.length ? ' ' + T('The school will confirm your class.') : '') + '</p>' +
+                  (!(global.Cloud && global.Cloud.client) && S.data.classes.length ? ' ' + T('The school will confirm your class.') : '') + '</p>' +
                 '<button class="btn btn--pri btn--wide" type="submit">' + T('Create an account') + '</button>' +
               '</form>'
             : '<form class="auth__form" data-form="login">' +
@@ -525,6 +528,7 @@
        submitted twice. Only the cloud path waits. */
     A.doLogin = function (form) {
       if (App.authBusy) return;
+      App.authNotice = null;
       var email = val(form, 'email'), password = val(form, 'password');
 
       if (!(global.Cloud && global.Cloud.client)) {
@@ -576,7 +580,7 @@
           /* email confirmation is on: there is no session until they click
              the link, so do not drop them on a form that cannot work yet */
           App.authError = null;
-          U.toast(T('Check your email to confirm your account'), 'mail');
+          App.authNotice = T('We sent a confirmation link to {email}. Open it, then sign in here.', { email: r.email });
           App.go('#/p/login');
           return;
         }
@@ -592,20 +596,28 @@
     /* Signed in against Supabase: pull the school down, start listening for
        what other devices do, and work out who this session belongs to. */
     function startCloudSession() {
-      return global.Cloud.hydrate().then(function (data) {
+      var uid = null;
+      return global.Cloud.session().then(function (sess) {
+        uid = sess && sess.user && sess.user.id;
+        if (!uid) throw { auth: 'Wrong email or password' };
+        return global.Cloud.hydrate();
+      }).then(function (data) {
         S.adopt(data);
-        return global.Cloud.session();
-      }).then(function (sess) {
-        var uid = sess && sess.user && sess.user.id;
-        var me = uid && S.user(uid);
+        if (S.user(uid)) return S.user(uid);
+        /* The login worked but its profile row is not readable yet — the
+           sign-up trigger runs on the server, and a first read can beat it.
+           Wait a moment and look once more before giving up. */
+        return new Promise(function (res) { setTimeout(res, 800); })
+          .then(function () { return global.Cloud.hydrate(); })
+          .then(function (d2) { S.adopt(d2); return S.user(uid); });
+      }).then(function (me) {
         if (!me) {
-          /* The account exists but its profile row has not arrived — the
-             trigger runs on the server and realtime may beat the read. */
-          return global.Cloud.hydrate().then(function (d2) {
-            S.adopt(d2);
-            var again = uid && S.user(uid);
-            return again ? { user: again } : { error: 'Wrong email or password' };
-          });
+          /* Signed in, but the database has no profile for them: schema.sql
+             was never run, or its trigger is missing. Undo the half sign-in
+             and say what is actually wrong. */
+          global.Cloud.signOut();
+          S.detach();
+          return { error: 'Your account has no profile in the school database yet. Ask the school to finish setting it up.' };
         }
         global.Cloud.watch(function () {
           global.Cloud.hydrate().then(function (fresh) { S.refresh(fresh); });
@@ -613,7 +625,18 @@
         /* the online classroom lives in its own tables, and only reaches
            another device if we listen for it */
         global.Live.sync.watch(function () { global.Live.pull(); });
-        return global.Live.pull().then(function () { return { user: me }; });
+        /* the classroom tables are optional to signing in: if they are not
+           there yet, the school still opens */
+        return global.Live.pull().then(function () { return { user: me }; },
+                                        function () { return { user: me }; });
+      }).catch(function (e) {
+        if (e && e.auth) return { error: e.auth };
+        if (global.console) console.error('sign-in:', e && e.message);
+        S.detach();
+        global.Cloud.signOut();
+        return { error: /fetch|network|failed to/i.test((e && e.message) || '')
+          ? 'Could not reach the school. Check your internet connection.'
+          : 'The school could not be opened. Try again in a moment.' };
       });
     }
     App.startCloudSession = startCloudSession;
@@ -658,11 +681,16 @@
     };
 
     A.logout = function () {
-      if (global.Cloud && global.Cloud.client) { global.Cloud.signOut(); }
       if (lastLive) { global.LiveView.unmount(); lastLive = null; }
-      App.session = null; App.filters = {}; App.flash = null;
+      var cloud = global.Cloud && global.Cloud.client;
+      App.session = null; App.filters = {}; App.flash = null; App.learn = null; App.authError = null;
       saveSession();
       location.hash = '';
+      if (cloud) {
+        /* whatever the last click changed goes up before the session ends */
+        S.flushNow().then(function () { return global.Cloud.signOut(); })
+          .then(function () { S.detach(); render(true); });
+      }
       render(true);
     };
     A.burger = function () { document.body.classList.toggle('nav-open'); };
@@ -744,6 +772,13 @@
        student typically each run their own) — refresh whatever is on screen.
        render() already knows to just refresh a mounted live room rather than
        rebuilding it, so a plain call is enough here too. */
+    var lastSyncError = 0;
+    S.onSyncError = function () {
+      if (Date.now() - lastSyncError < 8000) return;
+      lastSyncError = Date.now();
+      U.toast(T('A change could not be saved. Check your connection — it will be retried.'), 'alert');
+    };
+
     S.onChange(function () {
       if (App.session) render();
     });
@@ -759,12 +794,28 @@
     } else {
       App.session = null;
       App.booting = true;
+      /* Supabase sends people back from the confirmation email with either a
+         session or an error in the address. An expired or reused link must
+         say so, not drop them on a sign-in form with no explanation. */
+      var h = String(location.hash || '');
+      if (/error_description=/.test(h)) {
+        var m = /error_description=([^&]+)/.exec(h);
+        var desc = m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '';
+        App.authError = /expired|invalid/i.test(desc)
+          ? 'That confirmation link has expired or was already used. Sign in, or register again to get a new one.'
+          : 'Something went wrong';
+        history.replaceState(null, '', location.pathname + '#/p/login');
+      }
       global.Cloud.session().then(function (sess) {
         if (!sess) return null;
         return App.startCloudSession().then(function (r) {
           if (r && r.user) {
             App.session = { userId: r.user.id, role: r.user.role };
             saveSession();
+            /* arriving from the confirmation link: clear the tokens out of the address */
+            if (/access_token=/.test(String(location.hash))) location.hash = homeHash();
+          } else if (r && r.error) {
+            App.authError = r.error;
           }
         });
       }).catch(function (e) {
@@ -782,7 +833,12 @@
     document.addEventListener('change', onInput);
     document.addEventListener('input', onInput);
     document.addEventListener('keydown', onKey);
-    global.addEventListener('hashchange', function () { App.authError = null; render(); });
+    global.addEventListener('hashchange', function () {
+      App.authError = null;
+      /* the "check your email" note belongs to the sign-in page it was sent to */
+      if (!/^#\/p\/login/.test(location.hash)) App.authNotice = null;
+      render();
+    });
     global.addEventListener('beforeunload', function () {
       if (lastLive) global.LiveView.unmount();
     });
