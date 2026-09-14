@@ -23,10 +23,12 @@
       { k: 'homework', icon: 'inbox', label: 'Homework', cn: '作业' },
       { k: 'students', icon: 'users', label: 'Students', cn: '学生' },
       { k: 'payments', icon: 'wallet', label: 'Payments', cn: '学费' },
+      { k: 'course', icon: 'grad', label: 'Course content', cn: '学习内容' },
       { k: 'news', icon: 'megaphone', label: 'News', cn: '公告' }
     ],
     student: [
       { k: 'dashboard', icon: 'home', label: 'Dashboard', cn: '概览' },
+      { k: 'learn', icon: 'target', label: 'Learning path', cn: '学习路径' },
       { k: 'lessons', icon: 'calendar', label: 'My timetable', cn: '课表' },
       { k: 'vocab', icon: 'sparkles', label: 'Vocabulary', cn: '生词' },
       { k: 'homework', icon: 'file', label: 'Homework', cn: '作业' },
@@ -445,11 +447,13 @@
              : page === 'students' ? V.students()
              : page === 'payments' ? V.payments()
              : page === 'news' ? V.news()
+             : page === 'course' ? global.LearnViews.editor()
              : notFound();
       } else {
         body = page === 'dashboard' ? V.dashboard()
              : page === 'lessons' ? V.lessons()
              : page === 'lesson' ? V.lessonDetail(param)
+             : page === 'learn' ? global.LearnViews.path(param)
              : page === 'vocab' ? V.vocab()
              : page === 'homework' ? V.homework()
              : page === 'progress' ? V.progress()

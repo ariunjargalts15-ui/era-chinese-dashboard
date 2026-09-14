@@ -514,3 +514,74 @@ begin
     end;
   end loop;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────
+-- the learning path
+-- ─────────────────────────────────────────────────────────────
+-- Units are the teacher's; progress, XP and the streak belong to each student.
+-- A student can write their own rows here, which means a determined one could
+-- award themselves XP. That only touches the practice path — never grades,
+-- registers or invoices — and is the price of the path working offline-first
+-- in the browser rather than scoring every answer on the server.
+create table if not exists public.course_units (
+  id    text primary key,
+  pos   integer not null default 0,
+  title text not null default '',
+  cn    text not null default '',
+  words jsonb not null default '[]'::jsonb
+);
+
+create table if not exists public.learn_progress (
+  student_id uuid not null references public.profiles(id) on delete cascade,
+  unit_id    text not null references public.course_units(id) on delete cascade,
+  level      integer not null default 0 check (level between 0 and 3),
+  best       integer not null default 0,
+  rounds     integer not null default 0,
+  updated    date,
+  primary key (student_id, unit_id)
+);
+
+create table if not exists public.learners (
+  student_id uuid primary key references public.profiles(id) on delete cascade,
+  xp         integer not null default 0,
+  streak     integer not null default 0,
+  last_day   date
+);
+
+alter table public.course_units   enable row level security;
+alter table public.learn_progress enable row level security;
+alter table public.learners       enable row level security;
+
+drop policy if exists course_units_teacher   on public.course_units;
+drop policy if exists course_units_read      on public.course_units;
+drop policy if exists learn_progress_teacher on public.learn_progress;
+drop policy if exists learn_progress_own     on public.learn_progress;
+drop policy if exists learners_teacher       on public.learners;
+drop policy if exists learners_own           on public.learners;
+
+create policy course_units_teacher on public.course_units
+  for all to authenticated using (public.is_teacher()) with check (public.is_teacher());
+create policy course_units_read on public.course_units
+  for select to authenticated using (true);
+
+create policy learn_progress_teacher on public.learn_progress
+  for all to authenticated using (public.is_teacher()) with check (public.is_teacher());
+create policy learn_progress_own on public.learn_progress
+  for all to authenticated using (student_id = auth.uid()) with check (student_id = auth.uid());
+
+create policy learners_teacher on public.learners
+  for all to authenticated using (public.is_teacher()) with check (public.is_teacher());
+create policy learners_own on public.learners
+  for all to authenticated using (student_id = auth.uid()) with check (student_id = auth.uid());
+
+do $$
+declare t text;
+begin
+  foreach t in array array['course_units','learn_progress','learners']
+  loop
+    begin
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    exception when duplicate_object then null;
+    end;
+  end loop;
+end $$;

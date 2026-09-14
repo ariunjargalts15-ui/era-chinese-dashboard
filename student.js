@@ -67,11 +67,16 @@
     /* Registering does not put anyone in a class — the school does that. Until
        it has, the dashboard is empty of lessons through no fault of theirs, so
        say what is happening rather than showing a blank timetable. */
-    if (!done && !classes.length) return waitingPanel(s) + noticeStrip();
+    /* the practice path needs no class, so a student waiting for one can
+       start on it straight away */
+    if (!done && !classes.length) {
+      return waitingPanel(s) + (global.LearnViews ? global.LearnViews.dashStrip() : '') + noticeStrip();
+    }
 
     return '' +
       (done ? gradBanner() : live ? liveBanner(live) : '') +
       noticeStrip() +
+      (global.LearnViews ? global.LearnViews.dashStrip() : '') +
       '<div class="grid g4">' +
         stat('target', T('Attendance'), (rate == null ? '—' : rate + '<small>%</small>'), T('{n} lessons recorded', { n: rows.length })) +
         stat('book', T('Words studied'), words, T('across completed lessons')) +

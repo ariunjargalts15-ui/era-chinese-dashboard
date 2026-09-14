@@ -80,6 +80,55 @@
       ['抱歉', 'bàoqiàn', 'apologies'], ['尽快', 'jǐnkuài', 'as soon as possible'] ] }
   ];
 
+  /* ── the learning path ──
+     A course is an ordered list of units; each unit is a handful of words with
+     their pinyin and Mongolian meaning. Exercises are generated from the words,
+     so a teacher edits vocabulary, never individual questions. This is only the
+     starting point — the teacher can rewrite all of it. */
+  var STARTER_COURSE = [
+    { title: 'Мэндчилгээ', cn: '问候', words: [
+      ['你好', 'nǐ hǎo', 'сайн байна уу'], ['谢谢', 'xièxie', 'баярлалаа'],
+      ['再见', 'zàijiàn', 'баяртай'], ['对不起', 'duìbuqǐ', 'уучлаарай'],
+      ['没关系', 'méi guānxi', 'зүгээр дээ'], ['老师', 'lǎoshī', 'багш'],
+      ['学生', 'xuésheng', 'сурагч'], ['朋友', 'péngyou', 'найз'] ] },
+    { title: 'Тоо', cn: '数字', words: [
+      ['一', 'yī', 'нэг'], ['二', 'èr', 'хоёр'], ['三', 'sān', 'гурав'],
+      ['四', 'sì', 'дөрөв'], ['五', 'wǔ', 'тав'], ['六', 'liù', 'зургаа'],
+      ['七', 'qī', 'долоо'], ['十', 'shí', 'арав'] ] },
+    { title: 'Гэр бүл', cn: '家人', words: [
+      ['家', 'jiā', 'гэр бүл'], ['爸爸', 'bàba', 'аав'], ['妈妈', 'māma', 'ээж'],
+      ['哥哥', 'gēge', 'ах'], ['姐姐', 'jiějie', 'эгч'], ['妹妹', 'mèimei', 'охин дүү'],
+      ['儿子', 'érzi', 'хүү'], ['女儿', 'nǚ’ér', 'охин'] ] },
+    { title: 'Цаг хугацаа', cn: '时间', words: [
+      ['今天', 'jīntiān', 'өнөөдөр'], ['明天', 'míngtiān', 'маргааш'],
+      ['昨天', 'zuótiān', 'өчигдөр'], ['现在', 'xiànzài', 'одоо'],
+      ['早上', 'zǎoshang', 'өглөө'], ['晚上', 'wǎnshang', 'орой'],
+      ['星期', 'xīngqī', 'долоо хоног'], ['年', 'nián', 'жил'] ] },
+    { title: 'Хоол, ундаа', cn: '饮食', words: [
+      ['吃', 'chī', 'идэх'], ['喝', 'hē', 'уух'], ['水', 'shuǐ', 'ус'],
+      ['茶', 'chá', 'цай'], ['米饭', 'mǐfàn', 'будаа'], ['面条', 'miàntiáo', 'гоймон'],
+      ['好吃', 'hǎochī', 'амттай'], ['饿', 'è', 'өлсөх'] ] },
+    { title: 'Аялал', cn: '旅行', words: [
+      ['机场', 'jīchǎng', 'нисэх буудал'], ['护照', 'hùzhào', 'гадаад паспорт'],
+      ['行李', 'xíngli', 'ачаа тээш'], ['出发', 'chūfā', 'хөдлөх'],
+      ['到达', 'dàodá', 'хүрэлцэн ирэх'], ['地图', 'dìtú', 'газрын зураг'],
+      ['酒店', 'jiǔdiàn', 'зочид буудал'], ['附近', 'fùjìn', 'ойролцоо'] ] },
+    { title: 'Эрүүл мэнд', cn: '健康', words: [
+      ['医院', 'yīyuàn', 'эмнэлэг'], ['医生', 'yīshēng', 'эмч'],
+      ['感冒', 'gǎnmào', 'ханиад хүрэх'], ['发烧', 'fāshāo', 'халуурах'],
+      ['药', 'yào', 'эм'], ['休息', 'xiūxi', 'амрах'],
+      ['头疼', 'tóuténg', 'толгой өвдөх'], ['健康', 'jiànkāng', 'эрүүл'] ] }
+  ];
+
+  function starterCourse() {
+    return STARTER_COURSE.map(function (u, i) {
+      return {
+        id: 'unit' + (i + 1), pos: i, title: u.title, cn: u.cn,
+        words: u.words.map(function (w) { return { hz: w[0], py: w[1], mn: w[2] }; })
+      };
+    });
+  }
+
   function deckWords(deck) {
     return deck.words.map(function (w) { return { hz: w[0], py: w[1], en: w[2] }; });
   }
@@ -314,7 +363,8 @@
       progress: progress,
       payments: payments,
       news: seedNews(),
-      rooms: ['Room 102', 'Room 201', 'Room 305']
+      rooms: ['Room 102', 'Room 201', 'Room 305'],
+      course: starterCourse(), learn: [], learners: []
     };
   }
 
@@ -411,6 +461,13 @@
     /* a school saved before rooms were a list keeps whatever its classes
        already use; rooms() reads those anyway, so this only needs to exist */
     if (!d.rooms) d.rooms = [];
+    /* A school saved before the learning path gets the starter course. Only
+       when the field is missing altogether: an empty list is a teacher's
+       decision, and in cloud mode it is what an unfilled table reads as —
+       seeding it there would have every student try to write the course. */
+    if (!d.course) d.course = starterCourse();
+    if (!d.learn) d.learn = [];
+    if (!d.learners) d.learners = [];
     dropDemoUsers(d);
     return d;
   }
@@ -564,6 +621,137 @@
         var theirs = String(c.days || '').split('·').map(function (d) { return d.trim(); });
         return mine.some(function (d) { return theirs.indexOf(d) > -1; });
       });
+    },
+
+    /* ── the learning path ── */
+    course: function () {
+      return (this.data.course || []).slice().sort(function (a, b) { return (a.pos || 0) - (b.pos || 0); });
+    },
+    courseUnit: function (id) {
+      return (this.data.course || []).filter(function (u) { return u.id === id; })[0] || null;
+    },
+    /* positions are rewritten from the array order after every change, so the
+       order a teacher sees is the order that is saved */
+    _renumber: function () {
+      this.course().forEach(function (u, i) { u.pos = i; });
+    },
+    addUnit: function (data) {
+      var u = { id: uid('unit'), pos: (this.data.course || []).length,
+                title: data.title, cn: data.cn || '', words: data.words || [] };
+      this.data.course = this.data.course || [];
+      this.data.course.push(u);
+      this._renumber();
+      this.save();
+      return u;
+    },
+    updateUnit: function (id, data) {
+      var u = this.courseUnit(id);
+      if (!u) return null;
+      if (data.title != null) u.title = data.title;
+      if (data.cn != null) u.cn = data.cn;
+      if (data.words) u.words = data.words;
+      this.save();
+      return u;
+    },
+    /* a unit's progress goes with it — a level in a unit that no longer
+       exists would still be counted as a pass */
+    deleteUnit: function (id) {
+      this.data.course = (this.data.course || []).filter(function (u) { return u.id !== id; });
+      this.data.learn = (this.data.learn || []).filter(function (p) { return p.unitId !== id; });
+      this._renumber();
+      this.save();
+    },
+    moveUnit: function (id, dir) {
+      var list = this.course();
+      var i = list.map(function (u) { return u.id; }).indexOf(id);
+      var j = i + (dir < 0 ? -1 : 1);
+      if (i < 0 || j < 0 || j >= list.length) return false;
+      var t = list[i]; list[i] = list[j]; list[j] = t;
+      list.forEach(function (u, k) { u.pos = k; });
+      this.save();
+      return true;
+    },
+    loadStarterCourse: function () {
+      var self = this;
+      var have = {};
+      (this.data.course || []).forEach(function (u) { have[u.id] = 1; });
+      this.data.course = this.data.course || [];
+      starterCourse().forEach(function (u) {
+        if (have[u.id]) u.id = uid('unit');
+        self.data.course.push(u);
+      });
+      this._renumber();
+      this.save();
+      return this.course().length;
+    },
+
+    MAX_LEVEL: 3,
+    unitProgress: function (sid, unitId) {
+      return (this.data.learn || []).filter(function (p) {
+        return p.studentId === sid && p.unitId === unitId;
+      })[0] || null;
+    },
+    unitLevel: function (sid, unitId) {
+      var p = this.unitProgress(sid, unitId);
+      return p ? p.level || 0 : 0;
+    },
+    /* the path opens one unit at a time: the first is always open, each one
+       after it once the one before has been passed at least once */
+    unitUnlocked: function (sid, unitId) {
+      var list = this.course();
+      var i = list.map(function (u) { return u.id; }).indexOf(unitId);
+      if (i < 0) return false;
+      return i === 0 || this.unitLevel(sid, list[i - 1].id) >= 1;
+    },
+    learner: function (sid) {
+      var l = (this.data.learners || []).filter(function (x) { return x.studentId === sid; })[0];
+      return l || { studentId: sid, xp: 0, streak: 0, lastDay: null };
+    },
+    /* The streak as it stands today: a day missed since the last round breaks
+       it even though nothing has been written yet. */
+    currentStreak: function (sid) {
+      var l = this.learner(sid);
+      if (!l.lastDay) return 0;
+      return (l.lastDay === today() || l.lastDay === offset(-1)) ? l.streak : 0;
+    },
+    passedCount: function (unitId) {
+      return (this.data.learn || []).filter(function (p) {
+        return p.unitId === unitId && p.level >= 1;
+      }).length;
+    },
+
+    /* A finished round: XP, the streak, and a level on the unit. A round lost
+       by running out of hearts never reaches here, so it earns nothing. */
+    finishRound: function (sid, unitId, result) {
+      var unit = this.courseUnit(unitId);
+      if (!unit) return null;
+      var total = Math.max(1, result.total || 0);
+      var accuracy = Math.round(100 * (result.correct || 0) / total);
+      var perfect = (result.correct || 0) >= total;
+      var xp = 10 + (perfect ? 5 : 0);
+
+      this.data.learners = this.data.learners || [];
+      var l = this.data.learners.filter(function (x) { return x.studentId === sid; })[0];
+      if (!l) { l = { studentId: sid, xp: 0, streak: 0, lastDay: null }; this.data.learners.push(l); }
+      var t = today();
+      if (l.lastDay !== t) {
+        l.streak = l.lastDay === offset(-1) ? (l.streak || 0) + 1 : 1;
+        l.lastDay = t;
+      }
+      l.xp = (l.xp || 0) + xp;
+
+      this.data.learn = this.data.learn || [];
+      var p = this.unitProgress(sid, unitId);
+      if (!p) { p = { studentId: sid, unitId: unitId, level: 0, best: 0, rounds: 0, updated: t }; this.data.learn.push(p); }
+      var before = p.level || 0;
+      p.level = Math.min(this.MAX_LEVEL, before + 1);
+      p.best = Math.max(p.best || 0, accuracy);
+      p.rounds = (p.rounds || 0) + 1;
+      p.updated = t;
+
+      this.save();
+      return { xp: xp, accuracy: accuracy, perfect: perfect, level: p.level,
+               leveledUp: p.level > before, streak: l.streak, totalXp: l.xp };
     },
 
     userByEmail: function (email) {

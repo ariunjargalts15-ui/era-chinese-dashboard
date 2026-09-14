@@ -116,6 +116,40 @@ place to change.
 Note that `meet.jit.si` sometimes asks the first participant to sign in as moderator,
 and browsers only grant camera and microphone over `https://` or `localhost`.
 
+## The learning path
+
+A Duolingo-style practice path for students, under **Сургалтын зам**.
+
+The course is a list of units, each a handful of words with pinyin and a
+Mongolian meaning. Units open one at a time: the first is always open, each
+next one once the one before has been passed. Every unit has three levels.
+
+A round is built from the unit's words — the teacher writes vocabulary, never
+individual questions — and mixes five exercises: what a character means, which
+character carries a meaning, how it is read, what was said aloud, and matching
+pairs. A first visit is recognition only; reading and listening join from
+level 1.
+
+- **Five hearts.** A wrong answer costs one and the question comes back at the
+  end of the round, so a round cannot be finished without getting everything
+  right once. Out of hearts ends the round with nothing earned.
+- **XP.** 10 for a finished round, 15 for one with no mistakes.
+- **Streak.** Days in a row with at least one finished round; a missed day
+  resets it.
+
+Students waiting for a class can practise too — the path needs no enrolment.
+
+Teachers edit it under **Сургалтын агуулга**: add, rename, reorder and delete
+units, and edit the words as one line each, `汉字 | pinyin | утга`. A malformed
+line is reported with its number. Deleting a unit deletes students' progress in
+it. The school ships with a seven-unit starter course; in cloud mode an empty
+course offers to load it.
+
+In Supabase, units are the teacher's and progress belongs to each student
+(`course_units`, `learn_progress`, `learners`). A student writes their own
+progress rows, so a determined one could award themselves XP — that touches
+only the practice path, never grades, registers or invoices.
+
 ## Who gets into an online lesson
 
 Only the class. A student may walk into a room when **all** of these hold:
@@ -365,6 +399,7 @@ era-chinese-lite/
 ├── live.js       shared room state + the online classroom and its tools
 ├── teacher.js    teacher pages and actions
 ├── student.js    student pages and actions
+├── learn.js      the learning path: round logic, the path, the course editor
 ├── app.js        session, hash router, the public site, the shell, event delegation
 └── brand-loop.mp4  the calligraphy clip behind the sign-in panel (8 s, muted, 0.6 MB)
 ```
