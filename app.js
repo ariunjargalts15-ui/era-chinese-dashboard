@@ -93,10 +93,10 @@
      site rather than as a bare login prompt. */
 
   var PUB = [
-    { k: 'news', label: 'News', cn: '公告' },
     { k: 'contact', label: 'Contact', cn: '联系' }
   ];
-  var PUB_PAGES = ['news', 'contact', 'login', 'join'];
+  /* no public noticeboard: school news is read after signing in */
+  var PUB_PAGES = ['contact', 'login', 'join'];
 
   function publicPage() {
     /* Opening the app lands on the sign-in screen, the way it always has —
@@ -110,7 +110,7 @@
        a page and a footer. */
     if (page === 'login' || page === 'join') return authScreen(page);
 
-    var body = page === 'contact' ? contactPage() : newsPage();
+    var body = contactPage();
 
     return '<div class="site">' +
         siteHeader(page) +
@@ -200,7 +200,7 @@
 
   function siteHeader(page) {
     return '<header class="site__head"><div class="site__bar">' +
-        '<a class="site__logo" href="#/p/news">' +
+        '<a class="site__logo" href="#/p/login">' +
           '<b>ERA CHINESE.</b><span>你。让世界更美</span></a>' +
         '<nav class="site__nav">' +
           PUB.map(function (n) {
@@ -246,33 +246,6 @@
         '<div class="foot__legal">© ' + new Date().getFullYear() + ' ' + U.esc(sc.name) +
           ' · ' + U.esc(sc.cn) + '</div>' +
       '</footer>';
-  }
-
-  /* ── noticeboard ── */
-  function newsPage() {
-    var notices = S.published();
-    return '<div class="site__hero">' +
-        '<h1>' + T('School news') + '</h1>' +
-        '<p>' + T('Notices, intake dates and closures — straight from the school.') + '</p>' +
-      '</div>' +
-      (notices.length
-        ? '<div class="notices">' + notices.map(noticeCard).join('') + '</div>'
-        : '<div class="card">' + U.empty('megaphone', T('Nothing on the noticeboard yet'),
-            T('School news will show up here.')) + '</div>');
-  }
-
-  function noticeCard(n) {
-    var author = S.user(n.authorId);
-    return '<article class="notice' + (n.pinned ? ' notice--pin' : '') + '">' +
-      '<div class="notice__h">' +
-        (n.pinned ? '<span class="tag tag--gold">' + U.icon('pin', 12) + T('Pinned') + '</span>' : '') +
-        '<span class="sp"></span>' +
-        '<span class="tiny muted">' + U.fmt.date(n.date) + '</span></div>' +
-      '<b>' + U.esc(n.title) + '</b>' +
-      (n.cn ? '<div class="cn muted tiny">' + U.esc(n.cn) + '</div>' : '') +
-      '<p>' + U.esc(n.body) + '</p>' +
-      (author ? '<div class="tiny muted">' + T('by {name}', { name: U.esc(author.name) }) + '</div>' : '') +
-    '</article>';
   }
 
   function contactPage() {
