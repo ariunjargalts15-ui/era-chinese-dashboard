@@ -192,13 +192,7 @@
             (join
               ? T('Already have one?') + ' <a href="#/p/login">' + T('Sign in') + '</a>'
               : T('No account yet?') + ' <a href="#/p/join">' + T('Create a student account') + '</a>') +
-            /* the noticeboard is a page of its own now, so the way to it has
-               to be visible from the door — with its count, as the tab had */
-            '<div style="margin-top:10px"><a href="#/p/news">' +
-              U.icon('megaphone', 14) + ' ' + T('School news') +
-              (S.published().length ? ' · ' + S.published().length : '') + '</a>' +
-              '<span class="muted"> · </span>' +
-              '<a href="#/p/contact">' + T('Contact') + '</a></div>' +
+            '<div style="margin-top:10px"><a href="#/p/contact">' + T('Contact') + '</a></div>' +
           '</div>' +
         '</div>' +
       '</div>';
