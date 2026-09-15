@@ -221,11 +221,12 @@
   function defaultSchool() {
     return {
       name: 'ERA CHINESE', cn: '\u65f6\u4ee3\u6c49\u8bed',
-      phone: '7710-1251 (1)', phone2: '7710-1251 (2)',
-      email: 'sales@erachinese.mn', support: 'support@erachinese.mn',
-      address: 'Sukhbaatar District, 1st khoroo, Ulaanbaatar',
-      facebook: 'https://facebook.com/erachinese',
-      instagram: 'https://instagram.com/erachinese'
+      phone: '91619210', 
+      facebook:ERA Chinese
+      instagram: era_chinese
+      address: 'Чингэлтэй дүүрэг, 5-р хороо, Orange Plaza, 2 давхарт, 207 тоот',
+      facebook: 'https://www.facebook.com/p/ERA-Chinese-100078116688029/',
+      instagram: 'https://www.instagram.com/era_chinese/'
     };
   }
 
