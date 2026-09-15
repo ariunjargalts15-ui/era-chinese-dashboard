@@ -587,3 +587,76 @@ begin
     end;
   end loop;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────
+-- messages between a student and a teacher
+-- ─────────────────────────────────────────────────────────────
+-- Every row is one message in one student-teacher conversation. A student reads
+-- and writes only their own conversations; a teacher only the ones addressed to
+-- them. Nobody deletes messages, and once sent the text cannot be changed —
+-- the only thing that ever changes on a row is when the other person read it.
+create table if not exists public.messages (
+  id         text primary key,
+  student_id uuid not null references public.profiles(id) on delete cascade,
+  teacher_id uuid not null references public.profiles(id) on delete cascade,
+  sender     uuid not null references public.profiles(id) on delete cascade,
+  text       text not null check (length(text) between 1 and 2000),
+  at         bigint not null,
+  read_at    bigint,
+  check (sender = student_id or sender = teacher_id)
+);
+create index if not exists messages_student_idx on public.messages (student_id, at);
+create index if not exists messages_teacher_idx on public.messages (teacher_id, at);
+
+alter table public.messages enable row level security;
+drop policy if exists messages_teacher_read  on public.messages;
+drop policy if exists messages_teacher_write on public.messages;
+drop policy if exists messages_teacher_mark  on public.messages;
+drop policy if exists messages_student_read  on public.messages;
+drop policy if exists messages_student_write on public.messages;
+drop policy if exists messages_student_mark  on public.messages;
+
+create policy messages_teacher_read on public.messages
+  for select to authenticated using (teacher_id = auth.uid() and public.is_teacher());
+create policy messages_teacher_write on public.messages
+  for insert to authenticated
+  with check (teacher_id = auth.uid() and sender = auth.uid() and public.is_teacher());
+create policy messages_teacher_mark on public.messages
+  for update to authenticated
+  using (teacher_id = auth.uid() and public.is_teacher())
+  with check (teacher_id = auth.uid());
+
+create policy messages_student_read on public.messages
+  for select to authenticated using (student_id = auth.uid());
+-- a student writes as themselves, and only to someone who is actually staff
+create policy messages_student_write on public.messages
+  for insert to authenticated
+  with check (
+    student_id = auth.uid() and sender = auth.uid()
+    and exists (select 1 from public.profiles p where p.id = teacher_id and p.role = 'teacher')
+  );
+create policy messages_student_mark on public.messages
+  for update to authenticated
+  using (student_id = auth.uid()) with check (student_id = auth.uid());
+
+-- the update policies let a row be touched to mark it read; this keeps that
+-- the only thing an update can do, and only the recipient can do it
+create or replace function public.guard_message_update()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  new.id := old.id; new.student_id := old.student_id; new.teacher_id := old.teacher_id;
+  new.sender := old.sender; new.text := old.text; new.at := old.at;
+  if auth.uid() = old.sender then new.read_at := old.read_at; end if;
+  return new;
+end; $$;
+drop trigger if exists messages_guard on public.messages;
+create trigger messages_guard before update on public.messages
+  for each row execute function public.guard_message_update();
+
+do $$
+begin
+  begin
+    execute 'alter publication supabase_realtime add table public.messages';
+  exception when duplicate_object then null;
+  end;
+end $$;

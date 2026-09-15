@@ -365,7 +365,7 @@
       payments: payments,
       news: seedNews(),
       rooms: ['Room 102', 'Room 201', 'Room 305'],
-      course: starterCourse(), learn: [], learners: []
+      course: starterCourse(), learn: [], learners: [], messages: []
     };
   }
 
@@ -470,6 +470,7 @@
     if (!d.learn) d.learn = [];
     if (!d.learners) d.learners = [];
     if (!d.invites) d.invites = [];
+    if (!d.messages) d.messages = [];
     dropDemoUsers(d);
     return d;
   }
@@ -812,6 +813,98 @@
       this.save();
       return { xp: xp, accuracy: accuracy, perfect: perfect, level: p.level,
                leveledUp: p.level > before, streak: l.streak, totalXp: l.xp };
+    },
+
+    /* ── messages ──
+       A conversation is always one student and one teacher; there are no
+       group chats and students never message each other. Each message
+       records which of the two sent it and when the other one read it. */
+    MESSAGE_MAX: 2000,
+
+    /* Who this person may write to. A student writes to the teachers of their
+       own classes; a student with no class yet can reach every teacher, or
+       they would have nobody to ask where they are going. A teacher writes to
+       the students of their classes. Anyone who has already written to them is
+       added either way, so a conversation never disappears from the list. */
+    chatContacts: function (userId) {
+      var self = this;
+      var me = this.user(userId);
+      if (!me) return [];
+      var seen = {}, out = [];
+      function add(u) { if (u && !seen[u.id] && u.id !== me.id) { seen[u.id] = 1; out.push(u); } }
+
+      if (me.role === 'student') {
+        this.classesOfStudent(me.id).forEach(function (c) { add(self.user(c.teacherId)); });
+        if (!out.length) this.teachers().forEach(add);
+      } else {
+        this.classesOfTeacher(me.id).forEach(function (c) {
+          c.studentIds.forEach(function (sid) { add(self.user(sid)); });
+        });
+      }
+      (this.data.messages || []).forEach(function (m) {
+        if (me.role === 'student' && m.studentId === me.id) add(self.user(m.teacherId));
+        if (me.role === 'teacher' && m.teacherId === me.id) add(self.user(m.studentId));
+      });
+      return out;
+    },
+
+    /* the two ids of a conversation, whichever side is asking */
+    _pair: function (a, b) {
+      var ua = this.user(a), ub = this.user(b);
+      if (!ua || !ub || ua.role === ub.role) return null;
+      return ua.role === 'student' ? { studentId: ua.id, teacherId: ub.id } : { studentId: ub.id, teacherId: ua.id };
+    },
+
+    thread: function (userId, otherId) {
+      var p = this._pair(userId, otherId);
+      if (!p) return [];
+      return (this.data.messages || []).filter(function (m) {
+        return m.studentId === p.studentId && m.teacherId === p.teacherId;
+      }).sort(function (x, y) { return (x.at || 0) - (y.at || 0); });
+    },
+
+    lastMessage: function (userId, otherId) {
+      var t = this.thread(userId, otherId);
+      return t.length ? t[t.length - 1] : null;
+    },
+
+    sendMessage: function (fromId, toId, text) {
+      var body = String(text || '').replace(/\s+$/, '').replace(/^\s+/, '');
+      if (!body) return { error: 'Write a message first' };
+      if (body.length > this.MESSAGE_MAX) return { error: 'That message is too long' };
+      var p = this._pair(fromId, toId);
+      if (!p) return { error: 'Messages go between a student and a teacher' };
+      var allowed = this.chatContacts(fromId).some(function (u) { return u.id === toId; });
+      if (!allowed) return { error: 'You cannot message this person' };
+      var m = { id: uid('msg'), studentId: p.studentId, teacherId: p.teacherId,
+                from: fromId, text: body, at: Date.now(), readAt: null };
+      this.data.messages = this.data.messages || [];
+      this.data.messages.push(m);
+      this.save();
+      return { message: m };
+    },
+
+    /* opening a conversation reads everything the other person sent */
+    markRead: function (userId, otherId) {
+      var now = Date.now(), changed = false;
+      this.thread(userId, otherId).forEach(function (m) {
+        if (m.from !== userId && !m.readAt) { m.readAt = now; changed = true; }
+      });
+      if (changed) this.save();
+      return changed;
+    },
+
+    unreadFrom: function (userId, otherId) {
+      return this.thread(userId, otherId).filter(function (m) { return m.from !== userId && !m.readAt; }).length;
+    },
+
+    unreadCount: function (userId) {
+      var me = this.user(userId);
+      if (!me) return 0;
+      return (this.data.messages || []).filter(function (m) {
+        var mine = me.role === 'student' ? m.studentId === me.id : m.teacherId === me.id;
+        return mine && m.from !== me.id && !m.readAt;
+      }).length;
     },
 
     /* the school's public contact details, exactly as written in defaultSchool() */

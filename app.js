@@ -23,12 +23,14 @@
       { k: 'homework', icon: 'inbox', label: 'Homework', cn: '作业' },
       { k: 'students', icon: 'users', label: 'Students', cn: '学生' },
       { k: 'payments', icon: 'wallet', label: 'Payments', cn: '学费' },
+      { k: 'chat', icon: 'mail', label: 'Messages', cn: '消息' },
       { k: 'course', icon: 'grad', label: 'Course content', cn: '学习内容' },
       { k: 'news', icon: 'megaphone', label: 'News', cn: '公告' }
     ],
     student: [
       { k: 'dashboard', icon: 'home', label: 'Dashboard', cn: '概览' },
       { k: 'learn', icon: 'target', label: 'Learning path', cn: '学习路径' },
+      { k: 'chat', icon: 'mail', label: 'Messages', cn: '消息' },
       { k: 'lessons', icon: 'calendar', label: 'My timetable', cn: '课表' },
       { k: 'vocab', icon: 'sparkles', label: 'Vocabulary', cn: '生词' },
       { k: 'homework', icon: 'file', label: 'Homework', cn: '作业' },
@@ -306,6 +308,7 @@
                      (l.k === 'classes' && active === 'class');
             return '<a href="#/' + pfx + '/' + l.k + '" class="' + (on ? 'on' : '') + '">' +
               U.icon(l.icon) + '<span>' + T(l.label) + '</span>' +
+              (l.k === 'chat' && S.unreadCount(me.id) ? '<span class="navBadge">' + S.unreadCount(me.id) + '</span>' : '') +
               (zh ? '' : '<span class="cn" style="margin-left:auto;opacity:.55;font-size:11px">' + l.cn + '</span>') + '</a>';
           }).join('') + '</div>' +
           '<div class="nav__foot">' +
@@ -415,12 +418,14 @@
              : page === 'payments' ? V.payments()
              : page === 'news' ? V.news()
              : page === 'course' ? global.LearnViews.editor()
+             : page === 'chat' ? global.ChatViews.page(param)
              : notFound();
       } else {
         body = page === 'dashboard' ? V.dashboard()
              : page === 'lessons' ? V.lessons()
              : page === 'lesson' ? V.lessonDetail(param)
              : page === 'learn' ? global.LearnViews.path(param)
+             : page === 'chat' ? global.ChatViews.page(param)
              : page === 'vocab' ? V.vocab()
              : page === 'homework' ? V.homework()
              : page === 'progress' ? V.progress()
@@ -435,8 +440,25 @@
       if (global.console) console.error(err);
     }
 
+    /* A redraw can land mid-sentence — a message arriving from another device
+       repaints the page. Whatever field had focus keeps its text and caret. */
+    var focused = document.activeElement;
+    var keep = focused && focused.id && /^(INPUT|TEXTAREA)$/.test(focused.tagName)
+      ? { id: focused.id, value: focused.value, start: focused.selectionStart, end: focused.selectionEnd }
+      : null;
+
     root.innerHTML = shell(title, cn, body);
+    App.unreadShown = S.unreadCount(App.session.userId);
     document.body.classList.remove('nav-open');
+
+    if (keep) {
+      var again = document.getElementById(keep.id);
+      if (again) {
+        again.value = keep.value;
+        try { again.focus(); again.setSelectionRange(keep.start, keep.end); } catch (e) {}
+      }
+    }
+    if (page === 'chat') global.ChatViews.after(param);
 
     if (page === 'live') {
       lastLive = param;
@@ -699,7 +721,9 @@
     var form = ev.target.closest ? ev.target.closest('form[data-form]') : null;
     if (!form) return;
     ev.preventDefault();
-    var fn = form.getAttribute('data-form') === 'join' ? A.doJoin : A.doLogin;
+    var kind = form.getAttribute('data-form');
+    if (kind === 'chat') { global.ChatViews.send(form); return; }
+    var fn = kind === 'join' ? A.doJoin : A.doLogin;
     fn(form);
   }
 
@@ -744,7 +768,16 @@
     };
 
     S.onChange(function () {
-      if (App.session) render();
+      if (!App.session) return;
+      /* a message that arrives while the person is elsewhere gets a toast;
+         one in the conversation already open simply appears. The count it is
+         compared with is the one the last paint showed, so the very first
+         message after opening the page is announced too. */
+      var n = S.user(App.session.userId) ? S.unreadCount(App.session.userId) : 0;
+      if (App.unreadShown != null && n > App.unreadShown && App.route[1] !== 'chat') {
+        U.toast(T('New message'), 'mail');
+      }
+      render();
     });
 
     /* ── which school is this ──
