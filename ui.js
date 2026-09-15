@@ -248,6 +248,45 @@
     }, 2400);
   }
 
+  /* ── the greeting at the top of a dashboard ──
+     The greeting follows the interface language rather than being translated
+     word for word: "Сайн байна уу" in Mongolian, "Welcome" in English, 你好 in
+     Chinese. The date line above it is spelled out in full, which the short
+     calendar formats elsewhere do not do. */
+  var HELLO = { mn: 'Сайн байна уу', en: 'Welcome', zh: '你好' };
+  var WEEKDAY = {
+    mn: ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'],
+    en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    zh: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+  };
+  var MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+                  'August', 'September', 'October', 'November', 'December'];
+
+  function heroDate(iso) {
+    var d = parseDay(iso), lang = global.I18n.get();
+    var wd = (WEEKDAY[lang] || WEEKDAY.en)[d.getDay()];
+    if (lang === 'mn') return wd + ' гараг · ' + (d.getMonth() + 1) + '-р сарын ' + d.getDate();
+    if (lang === 'zh') return wd + ' · ' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    return wd + ' · ' + d.getDate() + ' ' + MONTH_EN[d.getMonth()];
+  }
+
+  /* stats: [{ label, value, tone }] — tone 'good' colours the figure green */
+  function greeting(user, stats) {
+    var lang = global.I18n.get();
+    var hello = HELLO[lang] || HELLO.en;
+    var sep = lang === 'zh' ? '，' : ',';
+    return '<section class="hello">' +
+      '<div class="hello__date">' + esc(heroDate(Store.today())) + '</div>' +
+      '<h1 class="hello__title">' + esc(hello) + sep + '<br>' + esc(user.name) + '</h1>' +
+      (stats && stats.length
+        ? '<div class="hello__stats">' + stats.map(function (st) {
+            return '<div class="hello__stat"><span>' + esc(st.label) + '</span>' +
+              '<b class="' + (st.tone === 'good' ? 'good' : st.tone === 'bad' ? 'bad' : '') + '">' + st.value + '</b></div>';
+          }).join('') + '</div>'
+        : '') +
+    '</section>';
+  }
+
   /* ── Chinese text-to-speech (browser built-in, no network) ── */
   function speak(text) {
     if (!('speechSynthesis' in window)) { toast('Speech is not available in this browser', 'alert'); return; }
@@ -273,6 +312,6 @@
     gloss: gloss, icon: icon, esc: esc, fmt: fmt, avatar: avatar, markTag: markTag, markLabel: markLabel,
     statusTag: statusTag, lessonNoTag: lessonNoTag, daysLabel: daysLabel,
     bar: bar, ring: ring, spark: spark, radar: radar, empty: empty,
-    Modal: Modal, toast: toast, speak: speak
+    Modal: Modal, toast: toast, speak: speak, greeting: greeting
   };
 })(window);

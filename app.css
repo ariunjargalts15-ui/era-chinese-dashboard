@@ -824,3 +824,31 @@ textarea.mono { font-family:ui-monospace, 'Cascadia Mono', Consolas, monospace; 
   .chat__back { display:inline-flex; }
   .bubble { max-width:86%; }
 }
+
+/* ══ the greeting ═══════════════════════════════════════════════════ */
+.hello {
+  background:#1C1816; color:#F4EDE3; border-radius:var(--r-lg);
+  padding:22px 26px 20px; margin-bottom:16px; border:1px solid #2A2420;
+}
+.hello__date {
+  font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#8E8175; font-weight:600;
+}
+.hello__title {
+  font:600 32px/1.15 var(--serif); letter-spacing:-.01em; margin:8px 0 0; color:#FBF6EE;
+}
+.hello__stats { display:flex; flex-wrap:wrap; margin-top:20px; }
+.hello__stat { padding:0 34px 0 0; margin-right:34px; border-right:1px solid #332C27; }
+.hello__stat:last-child { border-right:0; margin-right:0; padding-right:0; }
+.hello__stat span {
+  display:block; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#8E8175; font-weight:600;
+}
+.hello__stat b { display:block; font:600 26px/1.2 var(--serif); margin-top:4px; color:#FBF6EE; }
+.hello__stat b small { font-size:15px; }
+.hello__stat b.good { color:#4FB08B; }
+.hello__stat b.bad { color:#E0786F; }
+@media (max-width:640px) {
+  .hello { padding:18px 18px 16px; }
+  .hello__title { font-size:26px; }
+  .hello__stat { padding-right:18px; margin-right:18px; }
+  .hello__stat b { font-size:21px; }
+}

@@ -98,6 +98,7 @@
     });
 
     return '' +
+      U.greeting(t) +
       '<div class="grid g4">' +
         stat('layers', T('Classes'), classes.length, classes.map(function (c) { return c.level; }).join(' · ')) +
         stat('users', T('Students'), Object.keys(studentIds).length, T('across all classes')) +

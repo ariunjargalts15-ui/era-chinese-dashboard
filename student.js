@@ -70,21 +70,19 @@
     /* the practice path needs no class, so a student waiting for one can
        start on it straight away */
     if (!done && !classes.length) {
-      return waitingPanel(s) + (global.LearnViews ? global.LearnViews.dashStrip() : '') + noticeStrip();
+      return U.greeting(s) + waitingPanel(s) + (global.LearnViews ? global.LearnViews.dashStrip() : '') + noticeStrip();
     }
 
     return '' +
+      U.greeting(s, [
+        { label: T('Attendance'), value: rate == null ? '—' : rate + '<small>%</small>',
+          tone: rate == null ? '' : rate >= 85 ? 'good' : rate < 70 ? 'bad' : '' },
+        { label: T('Words studied'), value: words },
+        { label: T('Average grade'), value: avg == null ? '—' : avg }
+      ]) +
       (done ? gradBanner() : live ? liveBanner(live) : '') +
       noticeStrip() +
       (global.LearnViews ? global.LearnViews.dashStrip() : '') +
-      '<div class="grid g4">' +
-        stat('target', T('Attendance'), (rate == null ? '—' : rate + '<small>%</small>'), T('{n} lessons recorded', { n: rows.length })) +
-        stat('book', T('Words studied'), words, T('across completed lessons')) +
-        (done
-          ? stat('layers', T('Classes taken'), classes.length, T('over your whole course'))
-          : stat('file', T('Homework due'), due.length, due.length ? T('hand in when ready') : T('all caught up'))) +
-        stat('chart', T('Average grade'), (avg == null ? '—' : avg + '<small>/100</small>'), T('{n} graded', { n: graded.length })) +
-      '</div>' +
 
       '<div class="grid g-2-1 mt">' +
         '<div class="card"><div class="card__h"><h3>' + (live ? T('Lesson in progress') : T('Next lesson')) + '</h3><span class="sp"></span>' +
