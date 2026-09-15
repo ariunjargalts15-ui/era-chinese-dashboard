@@ -852,3 +852,33 @@ textarea.mono { font-family:ui-monospace, 'Cascadia Mono', Consolas, monospace; 
   .hello__stat { padding-right:18px; margin-right:18px; }
   .hello__stat b { font-size:21px; }
 }
+
+/* ══ online lessons ═════════════════════════════════════════════════ */
+.navBadge--live { background:var(--red); font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; animation:livePulse 1.6s infinite; }
+@keyframes livePulse { 0%,100% { opacity:1; } 50% { opacity:.55; } }
+.onGroup { margin-bottom:22px; }
+.onGroup__h { display:flex; align-items:center; gap:8px; font-size:15px; margin:0 0 10px; }
+.onEmpty { padding:18px; background:var(--card); border:1px dashed var(--line); border-radius:var(--r); }
+.onGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+.onCard {
+  display:flex; flex-direction:column; gap:6px; padding:16px 18px;
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+}
+.onCard--live { border-color:var(--red); box-shadow:0 0 0 3px var(--red-sf); }
+.onCard--past { opacity:.85; }
+.onCard__top { display:flex; align-items:center; gap:8px; }
+.onCard h4 { font-size:16px; margin:4px 0 0; }
+.onAgenda { margin:4px 0 0; font-size:13px; color:var(--ink-2); line-height:1.5; white-space:pre-wrap; }
+.onCard__who { display:flex; align-items:center; gap:10px; margin-top:6px; }
+.onAvatars { display:inline-flex; }
+.onAvatars .av { margin-left:-6px; box-shadow:0 0 0 2px var(--card); }
+.onAvatars .av:first-child { margin-left:0; }
+.onMore { margin-left:4px; font-size:11px; color:var(--ink-3); align-self:center; }
+.onCard__acts { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+.onJoin { animation:livePulse 1.6s infinite; }
+.onWait { display:flex; align-items:center; gap:6px; width:100%; font-size:12.5px; color:var(--amber); }
+.onPickHead { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.onPickHead .sp { flex:1; }
+.devCheck video { width:100%; aspect-ratio:4/3; background:#1C1816; border-radius:12px; object-fit:cover; }
+.devMeter { height:8px; background:var(--line-2); border-radius:6px; overflow:hidden; margin-top:10px; }
+.devMeter i { display:block; height:100%; width:0; background:var(--jade); transition:width .08s; }

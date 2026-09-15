@@ -907,6 +907,108 @@
       }).length;
     },
 
+    /* ── online lessons ──
+       An online lesson is an ordinary lesson of a class with an invitation
+       list on it: online.invited holds the students the teacher chose. Only
+       they may enter the room — being in the class is not enough — so a
+       teacher can run a make-up session for three people without the other
+       twelve walking in. */
+    isOnline: function (l) {
+      return !!(l && l.online && Array.isArray(l.online.invited));
+    },
+    startsAt: function (l) {
+      var d = String(l.date || '').split('-'), t = String(l.time || '00:00').split(':');
+      return new Date(+d[0], (+d[1] || 1) - 1, +d[2] || 1, +t[0] || 0, +t[1] || 0).getTime();
+    },
+    endsAt: function (l) {
+      return this.startsAt(l) + 60000 * ((l.online && l.online.duration) || 60);
+    },
+    onlineLessonsOfTeacher: function (tid) {
+      var self = this;
+      var mine = {};
+      this.classesOfTeacher(tid).forEach(function (c) { mine[c.id] = 1; });
+      /* a teacher with no classes of their own (the office) sees every session */
+      var all = !Object.keys(mine).length;
+      return this.data.lessons.filter(function (l) {
+        return self.isOnline(l) && (all || mine[l.classId]);
+      }).sort(function (a, b) { return self.startsAt(a) - self.startsAt(b); });
+    },
+    onlineLessonsOfStudent: function (sid) {
+      var self = this;
+      var inClass = {};
+      this.classesOfStudent(sid).forEach(function (c) { inClass[c.id] = 1; });
+      return this.data.lessons.filter(function (l) {
+        return self.isOnline(l) && inClass[l.classId] && l.online.invited.indexOf(sid) > -1;
+      }).sort(function (a, b) { return self.startsAt(a) - self.startsAt(b); });
+    },
+
+    /* data: classId, title, date, time, duration, agenda, invited, provider, url */
+    saveOnlineLesson: function (data, id) {
+      var c = this.klass(data.classId);
+      if (!c) return { error: 'Pick a class' };
+      var title = String(data.title || '').trim();
+      if (!title) return { error: 'The lesson needs a title' };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date || '')) return { error: 'Pick a date' };
+      if (!/^\d{2}:\d{2}$/.test(data.time || '')) return { error: 'Pick a time' };
+      var roster = {};
+      c.studentIds.forEach(function (s) { roster[s] = 1; });
+      var invited = (data.invited || []).filter(function (s, i, a) { return roster[s] && a.indexOf(s) === i; });
+      if (!invited.length) return { error: 'Invite at least one student' };
+      if (data.provider === 'custom' && !/^https:\/\//.test(data.url || '')) {
+        return { error: 'The meeting link must start with https://' };
+      }
+
+      var l = id ? this.lesson(id) : null;
+      if (id && !l) return { error: 'That lesson does not exist' };
+      if (!l) {
+        l = { id: uid('l'), deckId: null, cn: '', homework: '', notes: '', words: [], status: 'scheduled' };
+        this.data.lessons.push(l);
+        this.data.attendance[l.id] = this.data.attendance[l.id] || {};
+      }
+      var prev = l.online || {};
+      l.classId = c.id;
+      l.title = title;
+      l.date = data.date;
+      l.time = data.time;
+      l.topic = String(data.agenda || '').trim();
+      l.online = {
+        provider: data.provider === 'custom' ? 'custom' : 'jitsi',
+        room: prev.room || ('ERA-' + c.id + '-' + Math.random().toString(36).slice(2, 8)),
+        url: data.provider === 'custom' ? data.url : '',
+        invited: invited,
+        duration: Math.max(15, Math.min(240, +data.duration || 60)),
+        reminded: prev.reminded || null
+      };
+      this.save();
+      return { lesson: l };
+    },
+
+    deleteOnlineLesson: function (id) {
+      this.data.lessons = this.data.lessons.filter(function (x) { return x.id !== id; });
+      this.data.submissions = this.data.submissions.filter(function (x) { return x.lessonId !== id; });
+      delete this.data.attendance[id];
+      this.save();
+    },
+
+    /* When the room closes, the register fills itself in: whoever was seen in
+       the room is present, every other invited student is absent. A mark the
+       teacher already made by hand is never overwritten. */
+    recordOnlineAttendance: function (lessonId, seenIds) {
+      var l = this.lesson(lessonId);
+      if (!this.isOnline(l)) return null;
+      var seen = {};
+      (seenIds || []).forEach(function (s) { seen[s] = 1; });
+      var a = this.data.attendance[l.id] || (this.data.attendance[l.id] = {});
+      var present = 0, absent = 0, kept = 0;
+      l.online.invited.forEach(function (sid) {
+        if (a[sid]) { kept++; return; }
+        if (seen[sid]) { a[sid] = 'present'; present++; } else { a[sid] = 'absent'; absent++; }
+      });
+      l.status = 'completed';
+      this.save();
+      return { present: present, absent: absent, kept: kept };
+    },
+
     /* the school's public contact details, exactly as written in defaultSchool() */
     contact: function () { return defaultSchool(); },
 

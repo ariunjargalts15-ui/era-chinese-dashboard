@@ -152,6 +152,13 @@
       var self = this;
       return Sync.pull().then(function (rooms) {
         if (!rooms) return null;
+        Object.keys(rooms).forEach(function (id) {
+          var seen = ((self.rooms[id] || {}).seen) || {};
+          Object.keys(rooms[id].people || {}).forEach(function (uid) {
+            if ((rooms[id].people[uid] || {}).role !== 'teacher') seen[uid] = Date.now();
+          });
+          rooms[id].seen = seen;
+        });
         self.rooms = rooms;
         notify();
         return rooms;
@@ -211,6 +218,11 @@
       });
       if (!enrolled) return 'You are not in this class';
 
+      /* an online lesson admits only the students the teacher invited */
+      if (S.isOnline(lesson) && lesson.online.invited.indexOf(user.id) === -1) {
+        return 'You were not invited to this online lesson';
+      }
+
       var r = this.rooms[lessonId];
       if (!r || !r.active) return 'The lesson has not started yet';
       return null;
@@ -265,6 +277,7 @@
       if (!this.canJoin(lessonId, user)) return;
       r.people = r.people || {};
       r.people[user.id] = { name: user.name, role: user.role, at: Date.now() };
+      if (user.role === 'student') { r.seen = r.seen || {}; r.seen[user.id] = Date.now(); }
       this.saveRemote();
       Sync.pushPresence(lessonId, user, !!(r.hands || {})[user.id]);
     },
@@ -950,7 +963,16 @@
     U.toast(T('The room is open'), 'video');
   };
   A.endLive = function (e) {
-    Live.end(e.getAttribute('data-id'));
+    var id = e.getAttribute('data-id');
+    var lesson = S.lesson(id);
+    var r0 = Live.room(id);
+    var seen = Object.keys((r0 && r0.seen) || {});
+    Live.present(id).forEach(function (p) { if (p.role !== 'teacher' && seen.indexOf(p.id) === -1) seen.push(p.id); });
+    Live.end(id);
+    if (S.isOnline(lesson)) {
+      var rec = S.recordOnlineAttendance(id, seen);
+      if (rec) U.toast(T('Register saved: {p} present, {a} absent', { p: rec.present, a: rec.absent }), 'check');
+    }
     var host = document.getElementById('liveVideo');
     if (host) host.innerHTML = '';
     LiveView.refresh();
@@ -959,7 +981,8 @@
   A.leaveLive = function () {
     var l = lessonNow();
     LiveView.unmount();
-    App.go((App.session.role === 'teacher' ? '#/t/lesson/' : '#/s/lesson/') + (l ? l.id : ''));
+    var pfx = App.session.role === 'teacher' ? '#/t/' : '#/s/';
+    App.go(l && S.isOnline(l) ? pfx + 'online' : pfx + 'lesson/' + (l ? l.id : ''));
   };
 
   A.meetSettings = function (e) {

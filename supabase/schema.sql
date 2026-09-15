@@ -660,3 +660,44 @@ begin
   exception when duplicate_object then null;
   end;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────
+-- online lessons: only invited students get in
+-- ─────────────────────────────────────────────────────────────
+-- An online lesson carries its invitation list in lessons.online->'invited'.
+-- These policies replace the classroom ones above so that being in the class
+-- is no longer enough: a student must be on that list to see the room, appear
+-- in it, or write in its chat. A lesson without a list keeps the old rule.
+create or replace function public.can_join_lesson(lid text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.lessons l
+    where l.id = lid
+      and l.class_id in (select public.my_class_ids())
+      and (jsonb_typeof(l.online->'invited') is distinct from 'array'
+           or (l.online->'invited') ? auth.uid()::text)
+  );
+$$;
+
+drop policy if exists live_rooms_student on public.live_rooms;
+create policy live_rooms_student on public.live_rooms
+  for select to authenticated using (public.can_join_lesson(lesson_id));
+
+drop policy if exists live_presence_read on public.live_presence;
+create policy live_presence_read on public.live_presence
+  for select to authenticated using (public.can_join_lesson(lesson_id));
+
+drop policy if exists live_presence_own on public.live_presence;
+create policy live_presence_own on public.live_presence
+  for all to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid() and public.can_join_lesson(lesson_id));
+
+drop policy if exists live_chat_read on public.live_chat;
+create policy live_chat_read on public.live_chat
+  for select to authenticated using (public.can_join_lesson(lesson_id));
+
+drop policy if exists live_chat_own on public.live_chat;
+create policy live_chat_own on public.live_chat
+  for insert to authenticated
+  with check (user_id = auth.uid() and public.can_join_lesson(lesson_id));

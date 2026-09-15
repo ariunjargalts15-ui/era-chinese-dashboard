@@ -23,6 +23,7 @@
       { k: 'homework', icon: 'inbox', label: 'Homework', cn: '作业' },
       { k: 'students', icon: 'users', label: 'Students', cn: '学生' },
       { k: 'payments', icon: 'wallet', label: 'Payments', cn: '学费' },
+      { k: 'online', icon: 'video', label: 'Online lessons', cn: '在线课程' },
       { k: 'chat', icon: 'mail', label: 'Messages', cn: '消息' },
       { k: 'course', icon: 'grad', label: 'Course content', cn: '学习内容' },
       { k: 'news', icon: 'megaphone', label: 'News', cn: '公告' }
@@ -30,6 +31,7 @@
     student: [
       { k: 'dashboard', icon: 'home', label: 'Dashboard', cn: '概览' },
       { k: 'learn', icon: 'target', label: 'Learning path', cn: '学习路径' },
+      { k: 'online', icon: 'video', label: 'Online lessons', cn: '在线课程' },
       { k: 'chat', icon: 'mail', label: 'Messages', cn: '消息' },
       { k: 'lessons', icon: 'calendar', label: 'My timetable', cn: '课表' },
       { k: 'vocab', icon: 'sparkles', label: 'Vocabulary', cn: '生词' },
@@ -287,6 +289,15 @@
       '<p>' + T('Opening the school…') + '</p></div>';
   }
 
+  /* a session the signed-in person could walk into right now */
+  function liveForMe(me) {
+    var lessons = me.role === 'teacher' ? S.onlineLessonsOfTeacher(me.id) : S.onlineLessonsOfStudent(me.id);
+    return lessons.some(function (l) {
+      var r = global.Live && global.Live.room(l.id);
+      return r && r.active && global.Live.canJoin(l.id, me);
+    });
+  }
+
   /* ── shell ────────────────────────────────────────────── */
   function shell(title, cn, body) {
     var me = S.user(App.session.userId);
@@ -309,6 +320,7 @@
             return '<a href="#/' + pfx + '/' + l.k + '" class="' + (on ? 'on' : '') + '">' +
               U.icon(l.icon) + '<span>' + T(l.label) + '</span>' +
               (l.k === 'chat' && S.unreadCount(me.id) ? '<span class="navBadge">' + S.unreadCount(me.id) + '</span>' : '') +
+              (l.k === 'online' && liveForMe(me) ? '<span class="navBadge navBadge--live">' + T('Live') + '</span>' : '') +
               (zh ? '' : '<span class="cn" style="margin-left:auto;opacity:.55;font-size:11px">' + l.cn + '</span>') + '</a>';
           }).join('') + '</div>' +
           '<div class="nav__foot">' +
@@ -418,6 +430,7 @@
              : page === 'payments' ? V.payments()
              : page === 'news' ? V.news()
              : page === 'course' ? global.LearnViews.editor()
+             : page === 'online' ? global.OnlineViews.page()
              : page === 'chat' ? global.ChatViews.page(param)
              : notFound();
       } else {
@@ -425,6 +438,7 @@
              : page === 'lessons' ? V.lessons()
              : page === 'lesson' ? V.lessonDetail(param)
              : page === 'learn' ? global.LearnViews.path(param)
+             : page === 'online' ? global.OnlineViews.page()
              : page === 'chat' ? global.ChatViews.page(param)
              : page === 'vocab' ? V.vocab()
              : page === 'homework' ? V.homework()
