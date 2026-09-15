@@ -362,6 +362,7 @@
     'Make teacher': 'Багш болгох',
     '{name} is now a teacher': '{name} одоо багш боллоо',
     'The school database is missing the course tables. Run supabase/schema.sql again in Supabase, then reload.': 'Сургуулийн өгөгдлийн санд сургалтын хүснэгтүүд алга байна. Supabase дээр supabase/schema.sql-г дахин ажиллуулаад хуудсаа шинэчилнэ үү.',
+    'Phone': 'Утас',
     /* news & noticeboard */
     'News': 'Мэдээ', 'School news': 'Сургуулийн мэдээ', 'All news': 'Бүх мэдээ',
     'Write a notice': 'Мэдээ бичих', 'Edit notice': 'Мэдээ засах', 'Save notice': 'Мэдээ хадгалах',
@@ -853,6 +854,7 @@
     'Make teacher': '设为老师',
     '{name} is now a teacher': '{name} 已成为老师',
     'The school database is missing the course tables. Run supabase/schema.sql again in Supabase, then reload.': '学校数据库缺少课程表，请在 Supabase 中重新运行 supabase/schema.sql 后刷新页面。',
+    'Phone': '电话',
     /* news & noticeboard */
     'News': '公告', 'School news': '学校公告', 'All news': '全部公告',
     'Write a notice': '发布公告', 'Edit notice': '编辑公告', 'Save notice': '保存公告',

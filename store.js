@@ -221,11 +221,11 @@
   function defaultSchool() {
     return {
       name: 'ERA CHINESE', cn: '\u65f6\u4ee3\u6c49\u8bed',
-      phone: '91619210', 
-      facebook:ERA Chinese
-      instagram: era_chinese
+      phone: '91619210',
       address: 'Чингэлтэй дүүрэг, 5-р хороо, Orange Plaza, 2 давхарт, 207 тоот',
+      facebookName: 'ERA Chinese',
       facebook: 'https://www.facebook.com/p/ERA-Chinese-100078116688029/',
+      instagramName: 'era_chinese',
       instagram: 'https://www.instagram.com/era_chinese/'
     };
   }
@@ -813,6 +813,9 @@
       return { xp: xp, accuracy: accuracy, perfect: perfect, level: p.level,
                leveledUp: p.level > before, streak: l.streak, totalXp: l.xp };
     },
+
+    /* the school's public contact details, exactly as written in defaultSchool() */
+    contact: function () { return defaultSchool(); },
 
     userByEmail: function (email) {
       var e = String(email || '').trim().toLowerCase();

@@ -765,3 +765,10 @@ textarea.mono { font-family:ui-monospace, 'Cascadia Mono', Consolas, monospace; 
 }
 
 .auth__ok { background:var(--jade-sf); border-color:#BFE0D4; color:#1F5A48; }
+
+/* footer contact rows are links now; the logos carry the brands' colours */
+.foot__link { color:var(--ink-2); text-decoration:none; }
+.foot__link:hover { color:var(--brand); }
+.foot__row svg { flex:none; }
+.foot__row a[href*="facebook.com"] svg { color:#1877F2; }
+.foot__row a[href*="instagram.com"] svg { color:#E1306C; }

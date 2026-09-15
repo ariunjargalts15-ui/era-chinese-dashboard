@@ -218,29 +218,24 @@
   }
 
   function siteFooter() {
-    var sc = S.data.school;
-    function line(label, phone, email) {
+    var sc = S.contact();
+    function row(label, ic, text, href) {
+      var val = U.icon(ic, 15) + U.esc(text);
       return '<div class="foot__row">' +
         '<span class="foot__lbl">' + T(label) + ':</span>' +
-        '<span class="foot__val">' + U.icon('phone', 14) + U.esc(phone) + '</span>' +
-        '<a class="foot__mail" href="mailto:' + U.esc(email) + '">' + U.esc(email) + '</a>' +
+        (href
+          ? '<a class="foot__val foot__link" href="' + U.esc(href) + '"' +
+              (/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '') + '>' + val + '</a>'
+          : '<span class="foot__val">' + val + '</span>') +
       '</div>';
     }
     return '<footer class="site__foot">' +
         '<div class="foot__in">' +
           '<div class="foot__contact">' +
-            line('Sales', sc.phone, sc.email) +
-            line('Support', sc.phone2, sc.support) +
-            '<div class="foot__row">' +
-              '<span class="foot__lbl">' + T('Address') + ':</span>' +
-              '<span class="foot__val">' + U.icon('map', 14) + U.esc(sc.address) + '</span>' +
-            '</div>' +
-            '<div class="foot__social">' +
-              '<a href="' + U.esc(sc.facebook) + '" target="_blank" rel="noopener" aria-label="Facebook">' +
-                U.icon('facebook', 17) + '</a>' +
-              '<a href="' + U.esc(sc.instagram) + '" target="_blank" rel="noopener" aria-label="Instagram">' +
-                U.icon('instagram', 17) + '</a>' +
-            '</div>' +
+            row('Phone', 'phone', sc.phone, 'tel:' + sc.phone) +
+            row('Facebook', 'facebook', sc.facebookName, sc.facebook) +
+            row('Instagram', 'instagram', sc.instagramName, sc.instagram) +
+            row('Address', 'map', sc.address, '') +
           '</div>' +
         '</div>' +
         '<div class="foot__legal">© ' + new Date().getFullYear() + ' ' + U.esc(sc.name) +
@@ -249,14 +244,15 @@
   }
 
   function contactPage() {
-    var sc = S.data.school;
+    var sc = S.contact();
     return '<div class="site__hero">' +
         '<h1>' + T('Contact') + '</h1>' +
         '<p>' + T('Come in, call, or write — whichever suits you.') + '</p>' +
       '</div>' +
-      '<div class="grid g3">' +
-        contactCard('phone', T('Sales'), sc.phone, 'tel:' + sc.phone) +
-        contactCard('mail', T('Email'), sc.email, 'mailto:' + sc.email) +
+      '<div class="grid g4">' +
+        contactCard('phone', T('Phone'), sc.phone, 'tel:' + sc.phone) +
+        contactCard('facebook', 'Facebook', sc.facebookName, sc.facebook) +
+        contactCard('instagram', 'Instagram', sc.instagramName, sc.instagram) +
         contactCard('map', T('Address'), sc.address, '') +
       '</div>';
   }
@@ -266,7 +262,8 @@
       '<div class="stat__k" style="margin-top:12px">' + U.esc(k) + '</div>' +
       '<div style="font-weight:700;margin-top:4px">' + U.esc(v) + '</div>';
     return '<div class="card"><div class="card__b">' +
-      (href ? '<a href="' + U.esc(href) + '" style="color:inherit;text-decoration:none">' + inner + '</a>' : inner) +
+      (href ? '<a href="' + U.esc(href) + '"' + (/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '') +
+        ' style="color:inherit;text-decoration:none">' + inner + '</a>' : inner) +
       '</div></div>';
   }
 
